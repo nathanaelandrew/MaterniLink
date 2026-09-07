@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - MaterniLink{% endblock %}
+
+{% block content %}
+<div class="dashboard-card">
+    <h1>Hello, {{ user.username }}.</h1>
+    <p>How are you feeling today?</p>
+    
+    <div style="margin-top: 30px;">
+        <p class="text-secondary">This is your quiet space to track your journey.</p>
+    </div>
+
+    <form action="{% url 'logout' %}" method="post" style="background: none; padding: 0; box-shadow: none; margin-top: 40px;">
+        {% csrf_token %}
+        <button type="submit">
+            Log Out
+        </button>
+    </form>
+</div>
+{% endblock %}

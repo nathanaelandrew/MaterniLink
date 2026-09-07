@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - MaterniLink{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>Create Account</h2>
+    <p class="subtitle">Join our community of expectant parents.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Create Account</button>
+    </form>
+
+    <div class="footer-link">
+        Already have an account? <a href="{% url 'login' %}">Log in</a>
+    </div>
+</div>
+{% endblock %}
