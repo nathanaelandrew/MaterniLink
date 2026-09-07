@@ -1,0 +1,23 @@
+# Virtual Environment (Critical - do NOT push this)
+venv/
+env/
+ENV/
+.venv/
+
+# Python compiled files / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# macOS system files
+.DS_Store
+
+# Local secrets & environment variables
+.env
+*.local
+
+# Django specific
+*.log
+local_settings.py
+db.sqlite3
+media/
