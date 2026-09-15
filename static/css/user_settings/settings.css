@@ -1,0 +1,74 @@
+/* ---------- Settings feature ---------- */
+
+.feature-wrapper {
+    min-height: 100vh;
+    background-color: var(--cream);
+}
+
+.feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--white);
+}
+
+.feature-brand {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    color: var(--sage-deep);
+}
+
+.feature-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.feature-nav a {
+    text-decoration: none;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.feature-nav a:hover {
+    color: var(--sage-deep);
+}
+
+.feature-main {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 2rem;
+}
+
+.feature-card {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 480px;
+    width: 100%;
+}
+
+.feature-card h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.toggle-row:last-of-type {
+    border-bottom: none;
+}
+
+.toggle-row span {
+    font-size: 0.95rem;
+    color: var(--ink);
+}

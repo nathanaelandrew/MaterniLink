@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - MaterniLink{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="home-wrapper">
+    <header class="home-header">
+        <span class="home-brand">MaterniLink</span>
+        <nav class="home-nav">
+            <a href="{% url 'profile:profile' %}">Profile</a>
+            <a href="{% url 'user_settings:settings' %}">Settings</a>
+            <form action="{% url 'login:logout' %}" method="post" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline">Log out</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <div class="dashboard-card">
+            <h1>Hello, {{ user.username }}.</h1>
+            <p class="text-secondary">How are you feeling today?</p>
+            <p class="text-secondary" style="margin-top: 1rem;">This is your quiet space to track your journey.</p>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/home/home.js' %}"></script>
+{% endblock %}

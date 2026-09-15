@@ -1,0 +1,132 @@
+/* ---------- Login feature: auth split-screen layout ---------- */
+
+.auth-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.auth-panel {
+    flex: 1;
+    background-color: var(--sage-deep);
+    color: var(--cream);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-panel h1 {
+    font-size: 2.75rem;
+    max-width: 380px;
+    position: relative;
+    z-index: 2;
+}
+
+.auth-panel p {
+    margin-top: 1rem;
+    max-width: 340px;
+    color: rgba(247, 243, 236, 0.8);
+    position: relative;
+    z-index: 2;
+}
+
+.auth-blob {
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    background: var(--sage);
+    opacity: 0.35;
+    border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%;
+    bottom: -140px;
+    right: -120px;
+}
+
+.auth-form-side {
+    flex: 1;
+    background-color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.auth-form-inner {
+    width: 100%;
+    max-width: 380px;
+}
+
+.auth-form-inner h2 {
+    font-size: 1.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.auth-form-inner .subtext {
+    color: var(--ink-soft);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.auth-form-inner form p {
+    margin-bottom: 1.1rem;
+}
+
+.auth-form-inner label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+}
+
+.auth-form-inner input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    background-color: var(--cream);
+    color: var(--ink);
+}
+
+.auth-form-inner input:focus {
+    outline: 2px solid var(--sage);
+    outline-offset: 1px;
+    background-color: var(--white);
+}
+
+.auth-form-inner .helptext,
+.auth-form-inner ul.errorlist {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    list-style: none;
+    margin-top: 0.3rem;
+}
+
+.auth-form-inner ul.errorlist {
+    color: #B3492E;
+}
+
+.auth-switch {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+@media (max-width: 800px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+    .auth-panel {
+        min-height: 220px;
+        padding: 2.5rem 2rem;
+    }
+    .auth-panel h1 {
+        font-size: 2rem;
+    }
+    .auth-form-side {
+        padding: 2.5rem 1.5rem;
+    }
+}

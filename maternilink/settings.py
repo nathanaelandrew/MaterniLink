@@ -41,8 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
-    'home',
+    'apps.login',
+    'apps.register',
+    'apps.home',
+    'apps.profile',
+    'apps.user_settings',
 ]
 
 MIDDLEWARE = [
@@ -141,7 +144,8 @@ MAILERS = {
 }
 
 # Where to go after successful login
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'home:home'
 
 # Where to go after logout
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'login:login'
+LOGIN_URL = 'login:login'

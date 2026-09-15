@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - MaterniLink{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-panel">
+        <div class="auth-blob"></div>
+        <h1>Welcome back.</h1>
+        <p>Pick up right where you left off.</p>
+    </div>
+
+    <div class="auth-form-side">
+        <div class="auth-form-inner">
+            <h2>Log in</h2>
+            <p class="subtext">Log in to your dashboard.</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="message">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn-primary">Log in</button>
+            </form>
+
+            <p class="auth-switch">Don't have an account? <a href="{% url 'register:register' %}">Sign up</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/login/login.js' %}"></script>
+{% endblock %}
