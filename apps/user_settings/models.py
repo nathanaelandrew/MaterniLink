@@ -1,7 +1,11 @@
-from django.contrib.auth.models import User
 from django.db import models
+from django.conf import settings
 
 class UserSettings(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='settings'
+    )
     dark_mode = models.BooleanField(default=False)
     email_notifications = models.BooleanField(default=True)

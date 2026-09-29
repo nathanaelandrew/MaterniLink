@@ -149,3 +149,5 @@ LOGIN_REDIRECT_URL = 'home:home'
 # Where to go after logout
 LOGOUT_REDIRECT_URL = 'login:login'
 LOGIN_URL = 'login:login'
+
+AUTH_USER_MODEL = 'profile.User'

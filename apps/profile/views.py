@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from .models import Profile
+from .models import DoctorProfile, MotherProfile
 
 @login_required
 def profile_view(request):
