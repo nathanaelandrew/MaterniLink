@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 text-center">
+        <h1 class="display-2 mb-4" style="color: var(--sage-dark); font-family: 'Playfair Display', serif;">
+            A gentle journey <br>starts here.
+        </h1>
+        <p class="lead mb-5 mx-auto text-muted" style="max-width: 600px;">
+            MaterniLink connects you with your healthcare provider for a supported, serene pregnancy experience.
+        </p>
+        
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <!-- These links now work because of your URL names -->
+            <a href="{% url 'login:login' %}" class="btn btn-sage btn-lg px-5 shadow-sm">
+                Log in to Dashboard
+            </a>
+            <a href="{% url 'register:register' %}" class="btn btn-outline-secondary btn-lg px-5 rounded-pill border-2">
+                Join the Community
+            </a>
+        </div>
+        
+        <div class="mt-5 pt-5 opacity-50">
+            <p class="small text-uppercase tracking-widest fw-bold" style="color: var(--sage-dark);">Professional Maternity Care</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

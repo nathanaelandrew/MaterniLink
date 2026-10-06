@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-5 align-items-end">
+    <div class="col-md-7">
+        <h1 class="display-4">Hello, {{ mother.first_name|default:user.username }}.</h1>
+        <p class="lead text-muted">How are you feeling today?</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'profile:add_health_log' %}" class="btn btn-sage shadow-sm">+ Record Today's Vitals</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 1. Pregnancy Progress Card -->
+    <div class="col-md-4">
+        <div class="card p-4 h-100 border-0" style="background-color: #E9EDEA;">
+            <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Pregnancy Progress</h5>
+            <div class="text-center py-3">
+                <h2 class="display-1 fw-bold" style="color: var(--sage-dark);">{{ weeks }}</h2>
+                <p class="fw-bold">Weeks</p>
+            </div>
+            <div class="progress bg-white mt-3" style="height: 8px; border-radius: 10px;">
+                <div class="progress-bar" style="background-color: var(--sage-green); width: {% widthratio weeks 40 100 %}%"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-2 small opacity-50">
+                <span>Start</span>
+                <span>Full Term (40w)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Latest Health Metrics Card -->
+    <div class="col-md-8">
+        <div class="card p-4 h-100">
+            <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Latest Health Metrics</h5>
+            <div class="row text-center mt-3">
+                <div class="col-6 border-end">
+                    <p class="small text-muted mb-1">Blood Pressure</p>
+                    <h3 class="fw-bold">
+                        {% if latest_log %}{{ latest_log.systolic_bp }}/{{ latest_log.diastolic_bp }}{% else %}--{% endif %}
+                        <small class="fs-6 fw-normal">mmHg</small>
+                    </h3>
+                </div>
+                <div class="col-6">
+                    <p class="small text-muted mb-1">Current Weight</p>
+                    <h3 class="fw-bold">
+                        {% if latest_log %}{{ latest_log.weight_kg }}{% else %}--{% endif %}
+                        <small class="fs-6 fw-normal">kg</small>
+                    </h3>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: rgba(143,169,152,0.2);">
+            <div class="text-center">
+                <p class="small text-muted mb-0">Your data is securely synced with <b style="color: var(--sage-dark);">{{ doctor_name|default:"Dr. Mendoza" }}</b></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Upcoming Appointments Section (Integrated from Number 3) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card p-4 border-0 shadow-sm">
+            <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Upcoming Appointments</h5>
+            <div class="row align-items-center">
+                {% for appt in appointments %}
+                    <div class="col-md-4 {% if not forloop.last %}border-end{% endif %}">
+                        <div class="d-flex align-items-center p-2">
+                            <div class="text-center me-3 px-3 py-2 rounded" style="background-color: #FDFBF7; border: 1px solid #E9EDEA;">
+                                <div class="small text-uppercase fw-bold text-muted" style="font-size: 0.7rem;">{{ appt.scheduled_datetime|date:"M" }}</div>
+                                <div class="h4 mb-0 fw-bold" style="color: var(--sage-dark);">{{ appt.scheduled_datetime|date:"d" }}</div>
+                            </div>
+                            <div>
+                                <p class="mb-0 fw-bold text-dark">{{ appt.scheduled_datetime|date:"h:i A" }}</p>
+                                <p class="mb-0 small text-muted">{{ appt.reason|truncatechars:35 }}</p>
+                            </div>
+                        </div>w
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center py-3">
+                        <p class="small text-muted mb-0 italic">No upcoming appointments scheduled.</p>
+                        <a href="#" class="small fw-bold text-decoration-none" style="color: var(--sage-dark);">Request an appointment now →</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6">
+        <div class="card p-5 border-0 shadow-sm">
+            <div class="text-center mb-5">
+                <h2 class="display-6">Daily Check-in.</h2>
+                <p class="text-muted">Monitoring your vitals helps ensure a healthy journey for you and your baby.</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="row g-4">
+                    <!-- Date -->
+                    <div class="col-12">
+                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Date of Recording</label>
+                        {{ form.log_date }}
+                    </div>
+
+                    <!-- Weight -->
+                    <div class="col-md-6">
+                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Weight (kg)</label>
+                        {{ form.weight_kg }}
+                    </div>
+
+                    <!-- BP -->
+                    <div class="col-md-6">
+                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Blood Pressure (S/D)</label>
+                        <div class="input-group">
+                            {{ form.systolic_bp }}
+                            <span class="input-group-text bg-transparent border-0 text-muted">/</span>
+                            {{ form.diastolic_bp }}
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Symptoms or Notes</label>
+                        {{ form.notes }}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="col-12 mt-5">
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-sage btn-lg shadow-sm">Save Vitals</button>
+                            <a href="{% url 'home:dashboard' %}" class="btn btn-link text-muted text-decoration-none small text-center">Cancel and go back</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

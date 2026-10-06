@@ -1,43 +1,56 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Register - MaterniLink{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/register/register.css' %}">
-{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-panel">
-        <div class="auth-blob"></div>
-        <h1>Care that grows with every week.</h1>
-        <p>Track your pregnancy, keep your records close, and feel a little more prepared each day.</p>
-    </div>
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card p-5 border-0 shadow-lg">
+            <div class="text-center mb-4">
+                <h2 class="display-6">Join MaterniLink.</h2>
+                <p class="text-muted">Start your journey with care that grows with every week.</p>
+            </div>
 
-    <div class="auth-form-side">
-        <div class="auth-form-inner">
-            <h2>Create your account</h2>
-            <p class="subtext">Start your MaterniLink journey.</p>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="message">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post">
+            <form method="POST" novalidate>
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn-primary">Register</button>
+                
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase opacity-75">
+                            {{ field.label }}
+                        </label>
+                        
+                        <!-- Manually adding form-control class to Django fields -->
+                        <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                               name="{{ field.name }}" 
+                               class="form-control {% if field.errors %}is-invalid{% endif %}"
+                               placeholder="{{ field.label }}">
+                        
+                        <!-- Clean handling of help text -->
+                        {% if field.help_text %}
+                            <div class="form-text small opacity-50" style="font-size: 0.75rem;">
+                                {{ field.help_text|safe|truncatechars:100 }}
+                            </div>
+                        {% endif %}
+
+                        {% if field.errors %}
+                            <div class="invalid-feedback small">
+                                {{ field.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <div class="d-grid mt-5">
+                    <button type="submit" class="btn btn-sage btn-lg shadow-sm">Create Account</button>
+                </div>
             </form>
 
-            <p class="auth-switch">Already have an account? <a href="{% url 'login:login' %}">Log in</a></p>
+            <div class="text-center mt-4">
+                <p class="small text-muted">
+                    Already part of the journey? 
+                    <a href="{% url 'login:login' %}" class="text-decoration-none fw-bold" style="color: var(--sage-dark);">Log in here</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/register/register.js' %}"></script>
 {% endblock %}

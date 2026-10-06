@@ -9,3 +9,8 @@ class RegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email']
+
+class SignUpForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ("username", "email")

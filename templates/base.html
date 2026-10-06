@@ -4,13 +4,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MaterniLink{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    {% block extra_css %}{% endblock %}
+    <title>MaterniLink</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Playfair for headings, Inter for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sage-green: #8FA998;
+            --sage-dark: #6C8474;
+            --cream-bg: #FDFBF7;
+            --cream-card: #FFFFFF;
+            --text-main: #3E4A41;
+            --accent-gold: #D4AF37;
+        }
+
+        body { 
+            background-color: var(--cream-bg); 
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            color: var(--text-main);
+        }
+
+        /* Professional Navbar */
+        .navbar {
+            background-color: var(--cream-bg);
+            border-bottom: 1px solid rgba(143, 169, 152, 0.2);
+            padding: 1.2rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+            color: var(--sage-dark) !important;
+        }
+
+        .btn-sage {
+            background-color: var(--sage-green);
+            color: white !important;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sage:hover {
+            background-color: var(--sage-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background: var(--cream-card);
+            border: 1px solid rgba(143, 169, 152, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(62, 74, 65, 0.03);
+        }
+
+        /* Style Form Inputs */
+        input.form-control {
+            background-color: #F9F7F2;
+            border: 1px solid #E6E2D9;
+            padding: 0.8rem;
+            border-radius: 10px;
+        }
+
+        input.form-control:focus {
+            border-color: var(--sage-green);
+            box-shadow: 0 0 0 3px rgba(143, 169, 152, 0.1);
+        }
+
+            input.form-control {
+                background-color: #F9F7F2; /* Creamy input background */
+                border: 1px solid #E6E2D9;
+                padding: 0.8rem 1rem;
+                border-radius: 12px;
+                color: var(--text-main);
+                transition: all 0.3s ease;
+            }
+            
+            input.form-control:focus {
+                background-color: #FFFFFF;
+                border-color: var(--sage-green);
+                box-shadow: 0 0 0 4px rgba(143, 169, 152, 0.15);
+            }
+            
+            .form-text ul {
+                display: none; /* Hides the long list of password rules for a cleaner look */
+            }
+    </style>
 </head>
 <body>
-    {% block content %}
-    {% endblock %}
-    {% block extra_js %}{% endblock %}
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'onboarding' %}">MaterniLink.</a>
+            <div class="ms-auto d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="me-3 small text-muted">Hi, <b>{{ user.username }}</b></span>
+                    
+                    <!-- Fixed Logout: Uses POST method for Django 5.0 compatibility -->
+                    <form action="{% url 'login:logout' %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login:login' %}" class="btn btn-sage shadow-sm">Log in</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Message Alerts Container -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm rounded-pill px-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="container mt-5">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

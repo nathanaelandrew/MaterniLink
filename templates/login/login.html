@@ -1,43 +1,39 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Login - MaterniLink{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/login/login.css' %}">
-{% endblock %}
 
 {% block content %}
-<div class="auth-wrapper">
-    <div class="auth-panel">
-        <div class="auth-blob"></div>
-        <h1>Welcome back.</h1>
-        <p>Pick up right where you left off.</p>
-    </div>
-
-    <div class="auth-form-side">
-        <div class="auth-form-inner">
-            <h2>Log in</h2>
-            <p class="subtext">Log in to your dashboard.</p>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="message">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post">
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5">
+        <div class="card p-5">
+            <div class="text-center mb-4">
+                <h2 class="display-6">Welcome back.</h2>
+                <p class="text-muted">Your journey to motherhood, supported.</p>
+            </div>
+            
+            <form method="POST">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn-primary">Log in</button>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Enter your username">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••">
+                </div>
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-sage btn-lg">Sign into Dashboard</button>
+                </div>
             </form>
-
-            <p class="auth-switch">Don't have an account? <a href="{% url 'register:register' %}">Sign up</a></p>
+            
+            <div class="text-center mt-4">
+                <p class="small text-muted">
+                    Don't have an account? 
+                    <a href="{% url 'register:register' %}" class="text-decoration-none fw-bold" style="color: var(--sage-dark);">
+                        Join MaterniLink
+                    </a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/login/login.js' %}"></script>
 {% endblock %}

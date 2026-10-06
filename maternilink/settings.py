@@ -63,7 +63,7 @@ ROOT_URLCONF = 'maternilink.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -143,11 +143,13 @@ MAILERS = {
     },
 }
 
-# Where to go after successful login
-LOGIN_REDIRECT_URL = 'home:home'
+# After login, go to the Mother/Doctor Dashboard
+LOGIN_REDIRECT_URL = 'home:dashboard'
 
-# Where to go after logout
-LOGOUT_REDIRECT_URL = 'login:login'
+# After logout, go back to the Sage & Cream Landing Page (Onboarding)
+LOGOUT_REDIRECT_URL = 'onboarding'
+
+# If a user tries to access the dashboard without logging in, send them here
 LOGIN_URL = 'login:login'
 
 AUTH_USER_MODEL = 'profile.User'
