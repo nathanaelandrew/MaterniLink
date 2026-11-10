@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4 align-items-end">
+    <div class="col-md-8">
+        <h1 class="display-5 fw-bold" style="font-family: 'Playfair Display', serif; color: var(--text-main);">
+            Appointments
+        </h1>
+        <p class="text-muted lead mb-0">Schedule visits and review your consultation history with your care team.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'home:dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <!-- LEFT: Request Appointment Form Card -->
+    <div class="col-lg-5">
+        <div class="card p-4 p-md-5 border-0 shadow-sm h-100">
+            <div class="mb-4">
+                <h3 class="h4 fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Request a Visit</h3>
+                <p class="text-muted small">Choose your preferred doctor, date, and time.</p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- Doctor Selection -->
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-uppercase opacity-75">Attending Doctor</label>
+                    {{ form.doctor }}
+                    {% if form.doctor.errors %}
+                        <div class="text-danger small mt-1">{{ form.doctor.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Date & Time Row -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-uppercase opacity-75">Preferred Date</label>
+                        {{ form.appointment_date }}
+                        {% if form.appointment_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.appointment_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-uppercase opacity-75">Preferred Time</label>
+                        {{ form.appointment_time }}
+                        {% if form.appointment_time.errors %}
+                            <div class="text-danger small mt-1">{{ form.appointment_time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Reason for Visit -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-uppercase opacity-75">Reason for Visit</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <div class="text-danger small mt-1">{{ form.reason.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-sage btn-lg shadow-sm">
+                        Submit Appointment Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RIGHT: My Appointments Feed -->
+    <div class="col-lg-7">
+        <div class="card p-4 p-md-5 border-0 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="h4 fw-bold mb-1" style="font-family: 'Playfair Display', serif;">My Appointments</h3>
+                    <p class="text-muted small mb-0">Track pending confirmations and past visits.</p>
+                </div>
+                <span class="badge rounded-pill bg-light text-muted px-3 py-2 border">
+                    {{ appointments.count }} Total
+                </span>
+            </div>
+
+            <div class="appointment-feed" style="max-height: 520px; overflow-y: auto;">
+                {% for appt in appointments %}
+                    <div class="p-3 mb-3 rounded-4 border bg-white" style="border-color: rgba(143, 169, 152, 0.25) !important;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                <!-- Calendar Block -->
+                                <div class="text-center me-3 px-3 py-2 rounded-3" style="background-color: #FDFBF7; border: 1px solid #E6E2D9; min-width: 60px;">
+                                    <div class="small text-uppercase fw-bold text-muted" style="font-size: 0.65rem;">
+                                        {{ appt.scheduled_datetime|date:"M" }}
+                                    </div>
+                                    <div class="h5 mb-0 fw-bold" style="color: var(--sage-dark);">
+                                        {{ appt.scheduled_datetime|date:"d" }}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">
+                                        Dr. {{ appt.doctor.last_name|default:"Physician" }}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ appt.scheduled_datetime|date:"h:i A" }} &bull; {{ appt.scheduled_datetime|date:"l" }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Live Status Badges -->
+                            {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: #E9EDEA; color: #4A5D50; border: 1px solid #C6D4CB;">
+                                    ● Accepted
+                                </span>
+                            {% elif appt.status == 'Declined' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: #FDE8E8; color: #9B1C1C; border: 1px solid #FBD5D5;">
+                                    ● Declined
+                                </span>
+                            {% else %}
+                                <span class="badge rounded-pill px-3 py-2" style="background-color: #FFF6E5; color: #B7791F; border: 1px solid #FEEBC8;">
+                                    ● Pending
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="ps-2 mt-2 pt-2 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
+                            <p class="small text-secondary mb-0">
+                                <span class="fw-semibold text-dark">Reason:</span> {{ appt.reason }}
+                            </p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-5">
+                        <div class="display-6 text-muted opacity-25 mb-3">🗓️</div>
+                        <h6 class="fw-bold text-dark">No appointments requested yet</h6>
+                        <p class="text-muted small">Fill out the form on the left to schedule your first visit.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
