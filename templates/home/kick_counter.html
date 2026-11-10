@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Kick Counter Custom UX Styles */
+    .kick-circle-btn {
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #9bb5a4, #7f9988);
+        border: 8px solid #FDFBF7;
+        box-shadow: 0 15px 35px rgba(110, 134, 118, 0.35);
+        color: white;
+        transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .kick-circle-btn:active {
+        transform: scale(0.92);
+        box-shadow: 0 8px 18px rgba(110, 134, 118, 0.4);
+    }
+
+    .pulse-animation {
+        animation: softPulse 2.5s infinite;
+    }
+
+    @keyframes softPulse {
+        0% { box-shadow: 0 0 0 0 rgba(143, 169, 152, 0.5); }
+        70% { box-shadow: 0 0 0 22px rgba(143, 169, 152, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(143, 169, 152, 0); }
+    }
+
+    .timer-badge {
+        background-color: #F9F7F2;
+        border: 1px solid #E6E2D9;
+        font-family: monospace;
+        letter-spacing: 2px;
+    }
+</style>
+
+<!-- Header -->
+<div class="row mb-4 align-items-end">
+    <div class="col-md-8">
+        <h1 class="display-5 fw-bold" style="font-family: 'Playfair Display', serif; color: var(--text-main);">
+            Baby Kick Counter
+        </h1>
+        <p class="text-muted lead mb-0">Find a comfortable spot, relax, and tap each time you feel your baby move.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'home:dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Main Counter Experience Card -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+        <div class="card p-4 p-md-5 border-0 shadow-sm text-center">
+            
+            <!-- Target Guidance -->
+            <div class="d-inline-flex align-items-center justify-content-center gap-2 mb-3">
+                <span class="badge rounded-pill px-3 py-2" style="background-color: #E9EDEA; color: var(--sage-dark);">
+                    Standard Goal: 10 Movements
+                </span>
+                <span id="sessionStatus" class="badge rounded-pill px-3 py-2 bg-light text-muted border">
+                    Ready to start
+                </span>
+            </div>
+
+            <!-- Big Live Number Display -->
+            <div class="my-3">
+                <h1 id="kickDisplay" class="display-1 fw-bold mb-0 text-dark" style="font-size: 5.5rem; letter-spacing: -2px;">
+                    0
+                </h1>
+                <p class="text-uppercase small fw-bold text-muted tracking-wider">Movements Recorded</p>
+            </div>
+
+            <!-- Tap Button -->
+            <div class="my-4 position-relative">
+                <button type="button" id="tapButton" class="kick-circle-btn pulse-animation">
+                    <span style="font-size: 2.2rem;">🦶</span>
+                    <span class="fw-bold text-uppercase mt-2" style="font-size: 0.85rem; letter-spacing: 1px;">
+                        Tap on Kick
+                    </span>
+                </button>
+            </div>
+
+            <!-- Running Timer & Controls -->
+            <div class="d-flex justify-content-center align-items-center gap-3 my-3">
+                <div class="timer-badge px-4 py-2 rounded-pill fs-5 fw-bold text-secondary">
+                    ⏱️ <span id="timerDisplay">00:00</span>
+                </div>
+            </div>
+
+            <!-- Goal Reached Banner (Hidden until 10 kicks) -->
+            <div id="goalBanner" class="alert alert-success border-0 rounded-4 p-3 my-3 d-none" style="background-color: #E9EDEA; color: #3E4A41;">
+                🎉 <strong>Wonderful!</strong> You reached the recommended 10 movements. You can now save your session.
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <button type="button" id="resetBtn" class="btn btn-outline-secondary rounded-pill px-4" disabled>
+                    Reset
+                </button>
+                <button type="button" id="saveSessionBtn" class="btn btn-sage rounded-pill px-5 shadow-sm" disabled>
+                    Save Session
+                </button>
+            </div>
+
+            <!-- Form submits directly to home:kick_counter -->
+            <form id="saveKickForm" method="POST" action="{% url 'home:kick_counter' %}">
+                {% csrf_token %}
+                <input type="hidden" name="kick_count" id="hiddenKickCount" value="0">
+                <input type="hidden" name="duration_minutes" id="hiddenDuration" value="1">
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Past Sessions History Table -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8">
+        <div class="card p-4 p-md-5 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold mb-0" style="font-family: 'Playfair Display', serif;">Past Movement Sessions</h4>
+                <span class="badge rounded-pill bg-light text-muted border px-3 py-2">
+                    {{ past_sessions.count }} Recorded
+                </span>
+            </div>
+
+            <div class="session-feed">
+                {% for session in past_sessions %}
+                    <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded-3 border" style="background-color: #FDFBF7; border-color: #E6E2D9 !important;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2 rounded-circle text-center" style="background-color: #E9EDEA; width: 42px; height: 42px;">
+                                🦶
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">{{ session.kick_count }} Kicks</h6>
+                                <small class="text-muted">{{ session.start_time|date:"M d, Y @ h:i A" }}</small>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <span class="badge rounded-pill px-3 py-2 mb-1" style="background-color: #E9EDEA; color: #4A5D50;">
+                                {{ session.duration_minutes }} min session
+                            </span>
+                            {% if session.kick_count >= 10 %}
+                                <div class="small fw-semibold" style="color: var(--sage-dark); font-size: 0.75rem;">
+                                    ✓ 10-Goal Achieved
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <p class="mb-0">No kick sessions logged yet. Tap the button above to begin your first session!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive JavaScript -->
+<script>
+    let kicks = 0;
+    let timerInterval = null;
+    let secondsElapsed = 0;
+    let sessionStarted = false;
+
+    const tapButton = document.getElementById('tapButton');
+    const kickDisplay = document.getElementById('kickDisplay');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const resetBtn = document.getElementById('resetBtn');
+    const saveSessionBtn = document.getElementById('saveSessionBtn');
+    const goalBanner = document.getElementById('goalBanner');
+    const sessionStatus = document.getElementById('sessionStatus');
+
+    function startTimer() {
+        if (!sessionStarted) {
+            sessionStarted = true;
+            sessionStatus.textContent = "Session in progress";
+            sessionStatus.className = "badge rounded-pill px-3 py-2 bg-warning-subtle text-warning border";
+            resetBtn.disabled = false;
+            saveSessionBtn.disabled = false;
+
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                timerDisplay.textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+    }
+
+    tapButton.addEventListener('click', () => {
+        if (navigator.vibrate) {
+            navigator.vibrate(40);
+        }
+
+        startTimer();
+        kicks++;
+        kickDisplay.textContent = kicks;
+
+        kickDisplay.style.transform = "scale(1.15)";
+        setTimeout(() => kickDisplay.style.transform = "scale(1)", 150);
+
+        if (kicks === 10) {
+            goalBanner.classList.remove('d-none');
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        if (confirm("Reset this kick counting session?")) {
+            clearInterval(timerInterval);
+            kicks = 0;
+            secondsElapsed = 0;
+            sessionStarted = false;
+            kickDisplay.textContent = "0";
+            timerDisplay.textContent = "00:00";
+            sessionStatus.textContent = "Ready to start";
+            sessionStatus.className = "badge rounded-pill px-3 py-2 bg-light text-muted border";
+            goalBanner.classList.add('d-none');
+            resetBtn.disabled = true;
+            saveSessionBtn.disabled = true;
+        }
+    });
+
+    saveSessionBtn.addEventListener('click', () => {
+        clearInterval(timerInterval);
+        const durationMinutes = Math.max(1, Math.round(secondsElapsed / 60));
+        document.getElementById('hiddenKickCount').value = kicks;
+        document.getElementById('hiddenDuration').value = durationMinutes;
+        document.getElementById('saveKickForm').submit();
+    });
+</script>
+{% endblock %}

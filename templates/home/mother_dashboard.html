@@ -1,20 +1,24 @@
-
 {% extends 'base.html' %}
 
 {% block content %}
 <!-- Header Section with Direct Actions -->
 <div class="row mb-5 align-items-end">
-    <div class="col-md-7">
+    <div class="col-md-6">
         <h1 class="display-4" style="font-family: 'Playfair Display', serif; color: var(--text-main);">
             Hello, {{ mother.first_name|default:user.username }}.
         </h1>
         <p class="lead text-muted mb-0">How are you feeling today?</p>
     </div>
-    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
-        <!-- New: Direct Appointment Booking Button -->
+    <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end flex-wrap">
+        <!-- 1. Direct Kick Counter Button -->
+        <a href="{% url 'home:kick_counter' %}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
+            🦶 Kick Counter
+        </a>
+        <!-- 2. Direct Appointment Booking Button -->
         <a href="{% url 'profile:appointments' %}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
             🗓️ Book Appointment
         </a>
+        <!-- 3. Record Vitals Button -->
         <a href="{% url 'profile:add_health_log' %}" class="btn btn-sage shadow-sm px-4">
             + Record Today's Vitals
         </a>

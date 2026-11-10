@@ -1,19 +1,29 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from apps.profile.models import MotherProfile, PregnancyProfile, MaternalHealthLog, Appointment
-from datetime import date
+from django.contrib import messages
+from datetime import date, timedelta
+from django.utils import timezone
+
+# Make sure KickCountLog is included in this import:
+from apps.profile.models import (
+    MotherProfile,
+    PregnancyProfile,
+    MaternalHealthLog,
+    Appointment,
+    KickCountLog
+)
 
 @login_required
 def dashboard(request):
     user = request.user
     
-    # 1. Fetch Mother Profile from the profile app
+    # 1. Fetch Mother Profile
     mother = MotherProfile.objects.filter(user=user).first()
     
     # 2. Fetch Active Pregnancy & Calculate Weeks
     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
     weeks = 0
-    doctor_name = "Dr. Mendoza" # Default fallback
+    doctor_name = "Dr. Mendoza"
     
     if pregnancy:
         if pregnancy.lmp_date:
@@ -23,10 +33,10 @@ def dashboard(request):
         if pregnancy.doctor:
             doctor_name = f"Dr. {pregnancy.doctor.last_name}"
             
-    # 3. Get latest vitals for the metrics card
+    # 3. Get latest vitals
     latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
     
-    # 4. Get upcoming appointments for the bottom section
+    # 4. Get upcoming appointments
     appointments = Appointment.objects.filter(mother=mother).order_by('scheduled_datetime')[:3]
 
     return render(request, 'home/mother_dashboard.html', {
@@ -35,4 +45,48 @@ def dashboard(request):
         'latest_log': latest_log,
         'doctor_name': doctor_name,
         'appointments': appointments
+    })
+
+
+@login_required
+def kick_counter(request):
+    user = request.user
+    mother = MotherProfile.objects.filter(user=user).first()
+
+    if not mother:
+        messages.error(request, "Mother profile not found.")
+        return redirect('home:dashboard')
+
+    pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
+    if not pregnancy:
+        pregnancy = PregnancyProfile.objects.create(
+            mother=mother,
+            lmp_date=timezone.now().date() - timedelta(weeks=20),
+            edd_date=timezone.now().date() + timedelta(weeks=20),
+            pregnancy_status='Ongoing'
+        )
+
+    if request.method == 'POST':
+        kick_count = int(request.POST.get('kick_count', 0))
+        duration_minutes = max(1, int(request.POST.get('duration_minutes', 1)))
+
+        end_time = timezone.now()
+        start_time = end_time - timedelta(minutes=duration_minutes)
+
+        KickCountLog.objects.create(
+            pregnancy=pregnancy,
+            start_time=start_time,
+            end_time=end_time,
+            kick_count=kick_count,
+            duration_minutes=duration_minutes
+        )
+        messages.success(request, f"Kick session saved! Recorded {kick_count} movements in {duration_minutes} min.")
+        return redirect('home:kick_counter')
+
+    past_sessions = KickCountLog.objects.filter(pregnancy=pregnancy).order_by('-start_time')[:8]
+
+    return render(request, 'home/kick_counter.html', {
+        'mother': mother,
+        'pregnancy': pregnancy,
+        'past_sessions': past_sessions,
     })
