@@ -1,23 +1,39 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import MotherProfile, DoctorProfile, PregnancyProfile
-from .forms import MaternalHealthLogForm, AppointmentRequestForm
 from datetime import date
+
+# 1. All necessary models from the ERD
+from .models import (
+    MotherProfile,
+    DoctorProfile,
+    PregnancyProfile,
+    Appointment,
+    MaternalHealthLog
+)
+
+# 2. All necessary forms
+from .forms import MaternalHealthLogForm, AppointmentRequestForm
+
 
 @login_required
 def profile_view(request):
     user = request.user
     
-    # Fetch the appropriate profile based on role
     if user.role == 'Doctor':
         profile = get_object_or_404(DoctorProfile, user=user)
         template = 'profile/doctor_profile.html'
     else:
-        # Default to Mother profile
-        profile, created = MotherProfile.objects.get_or_create(
+        profile, _ = MotherProfile.objects.get_or_create(
             user=user, 
-            defaults={'first_name': user.username, 'last_name': 'User', 'date_of_birth': '2000-01-01'}
+            defaults={
+                'first_name': user.username,
+                'last_name': 'User',
+                'date_of_birth': '2000-01-01',
+                'blood_type': 'O+',
+                'emergency_contact_name': 'Emergency Contact',
+                'emergency_contact_phone': '000-000-0000',
+            }
         )
         template = 'profile/mother_profile.html'
 
@@ -29,6 +45,7 @@ def profile_view(request):
         return redirect('profile:profile')
 
     return render(request, template, {'profile': profile})
+
 
 @login_required
 def add_health_log(request):
@@ -51,6 +68,7 @@ def add_health_log(request):
         form = MaternalHealthLogForm(initial={'log_date': date.today()})
 
     return render(request, 'profile/health_log_form.html', {'form': form})
+
 
 @login_required
 def appointments_view(request):
@@ -86,7 +104,7 @@ def appointments_view(request):
                 reason=form.cleaned_data['reason'],
                 status='Pending'
             )
-            messages.success(request, "Appointment request sent successfully!")
+            messages.success(request, "Your appointment request has been sent for review.")
             return redirect('profile:appointments')
     else:
         form = AppointmentRequestForm(initial={'doctor': default_doctor})
