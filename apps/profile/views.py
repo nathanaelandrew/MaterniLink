@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import MotherProfile, DoctorProfile, PregnancyProfile
-from .forms import MaternalHealthLogForm
+from .forms import MaternalHealthLogForm, AppointmentRequestForm
 from datetime import date
 
 @login_required
