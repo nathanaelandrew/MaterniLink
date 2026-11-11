@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
+from .doctor_views import doctor_dashboard
 
 # Make sure KickCountLog is included in this import:
 from apps.profile.models import (
@@ -16,6 +17,10 @@ from apps.profile.models import (
 @login_required
 def dashboard(request):
     user = request.user
+    
+    # Doctors get their own dashboard
+    if user.role == 'Doctor':
+        return doctor_dashboard(request)
     
     # 1. Fetch Mother Profile
     mother = MotherProfile.objects.filter(user=user).first()

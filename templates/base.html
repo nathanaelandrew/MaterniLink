@@ -49,6 +49,14 @@
         <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
         <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/></symbol>
         <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.5L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.3 4.5l1.7-2M20 20v-4.5h-4.5"/></symbol>
+        <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></symbol>
+        <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l2.6-7.2A2 2 0 0 1 7.5 4.5h9a2 2 0 0 1 1.9 1.3L21 13v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5z"/><path d="M3 13h5l1 2.5h6l1-2.5h5"/></symbol>
+        <symbol id="i-calendar-days" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></symbol>
+        <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+        <symbol id="i-clock-arrow" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
     </svg>
 
     {% firstof mother.first_name user.username as display_name %}
@@ -74,7 +82,20 @@
                         </a>
                     </nav>
                 {% else %}
-                    <span class="header-spacer"></span>
+                    <nav class="nav-links" aria-label="Primary">
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:dashboard' %}is-active{% endif %}" href="{% url 'home:dashboard' %}">
+                            <svg class="icon"><use href="#i-home"/></svg>Dashboard
+                        </a>
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_requests' %}is-active{% endif %}" href="{% url 'home:doctor_requests' %}">
+                            <svg class="icon"><use href="#i-inbox"/></svg>Requests
+                        </a>
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_patients' or request.resolver_match.view_name == 'home:doctor_patient_detail' %}is-active{% endif %}" href="{% url 'home:doctor_patients' %}">
+                            <svg class="icon"><use href="#i-users"/></svg>Patients
+                        </a>
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_calendar' %}is-active{% endif %}" href="{% url 'home:doctor_calendar' %}">
+                            <svg class="icon"><use href="#i-calendar-days"/></svg>Calendar
+                        </a>
+                    </nav>
                 {% endif %}
 
                 <div class="dropdown">
@@ -137,7 +158,23 @@
                 <svg class="icon"><use href="#i-motion"/></svg>Kicks
             </a>
         </nav>
-    {% endif %}
+        {% elif user.is_authenticated %}
+            <!-- Mobile bottom navigation (doctors) -->
+            <nav class="tabbar tabbar--4" aria-label="Primary mobile">
+                <a href="{% url 'home:dashboard' %}" class="{% if request.resolver_match.view_name == 'home:dashboard' %}is-active{% endif %}">
+                    <svg class="icon"><use href="#i-home"/></svg>Home
+                </a>
+                <a href="{% url 'home:doctor_requests' %}" class="{% if request.resolver_match.view_name == 'home:doctor_requests' %}is-active{% endif %}">
+                    <svg class="icon"><use href="#i-inbox"/></svg>Requests
+                </a>
+                <a href="{% url 'home:doctor_patients' %}" class="{% if request.resolver_match.view_name == 'home:doctor_patients' or request.resolver_match.view_name == 'home:doctor_patient_detail' %}is-active{% endif %}">
+                    <svg class="icon"><use href="#i-users"/></svg>Patients
+                </a>
+                <a href="{% url 'home:doctor_calendar' %}" class="{% if request.resolver_match.view_name == 'home:doctor_calendar' %}is-active{% endif %}">
+                    <svg class="icon"><use href="#i-calendar-days"/></svg>Calendar
+                </a>
+            </nav>
+        {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/ui.js' %}"></script>
