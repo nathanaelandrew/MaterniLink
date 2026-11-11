@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescription · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<a href="{{ back_url }}" class="back-link" data-reveal>
+    <svg class="icon"><use href="#i-arrow-left"/></svg>Back to chart
+</a>
+
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Prescription</span>
+        <h1 class="page-title" style="font-size:clamp(1.8rem,3.4vw,2.5rem)">For {{ patient.first_name }} {{ patient.last_name }}</h1>
+        <p class="page-lead">The patient will see this under Records, with the dosage and your instructions.</p>
+    </div>
+</header>
+
+<section class="panel" data-reveal style="--d: 80ms">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="field {% if form.medication_name.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.medication_name.id_for_label }}">Medication</label>
+            {{ form.medication_name }}
+            {% if form.medication_name.errors %}<div class="field__error">{{ form.medication_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="field-row">
+            <div class="field {% if form.dosage.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.dosage.id_for_label }}">Dosage</label>
+                {{ form.dosage }}
+                {% if form.dosage.errors %}<div class="field__error">{{ form.dosage.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="field {% if form.duration.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.duration.id_for_label }}">Duration</label>
+                {{ form.duration }}
+                {% if form.duration.errors %}<div class="field__error">{{ form.duration.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+        <div class="field {% if form.frequency.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.frequency.id_for_label }}">Frequency</label>
+            {{ form.frequency }}
+            {% if form.frequency.errors %}<div class="field__error">{{ form.frequency.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="field">
+            <label class="field__label" for="{{ form.instructions.id_for_label }}">Instructions</label>
+            {{ form.instructions }}
+        </div>
+        <button type="submit" class="button button--lg button--block mt-2">Save prescription</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% comment %}One prescription. Expects: rx.{% endcomment %}
+<article class="rx">
+    <span class="rx__icon"><svg class="icon"><use href="#i-pill"/></svg></span>
+    <div class="rx__body">
+        <h4>{{ rx.medication_name }} <span class="pill pill--ok">{{ rx.dosage }}</span></h4>
+        <p class="rx__line">{{ rx.frequency }} &middot; {{ rx.duration }}</p>
+        {% if rx.instructions %}<p class="rx__note">{{ rx.instructions }}</p>{% endif %}
+        <span class="muted-sm">Prescribed by {{ rx.doctor }} on {{ rx.prescribed_date|date:"M j, Y" }}</span>
+    </div>
+</article>

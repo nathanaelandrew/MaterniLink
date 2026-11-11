@@ -6,13 +6,13 @@ from django.utils import timezone
 from .doctor_views import doctor_dashboard
 from .mother_views import annotate_reminders
 
-# Make sure KickCountLog is included in this import:
 from apps.profile.models import (
     MotherProfile,
     PregnancyProfile,
     MaternalHealthLog,
     Appointment,
     KickCountLog,
+    MedicalOrderRequest,
     Reminder
 )
 
@@ -50,6 +50,9 @@ def dashboard(request):
     all_reminders = annotate_reminders(
         Reminder.objects.filter(mother=mother, is_active=True).order_by('scheduled_time', 'reminder_id')
     ) if mother else []
+
+    open_requests = MedicalOrderRequest.objects.filter(
+        pregnancy__mother=mother, status='Requested').count() if mother else 0
 
     return render(request, 'home/mother_dashboard.html', {
         'reminders': all_reminders[:5],

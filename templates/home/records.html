@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Records · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Your health file</span>
+        <h1 class="page-title">Records</h1>
+        <p class="page-lead">Prescriptions from your doctor, and your lab and ultrasound results, all in one place.</p>
+    </div>
+    {% if pregnancy %}
+        <a href="{% url 'home:record_upload' %}" class="button">
+            <svg class="icon"><use href="#i-upload"/></svg>Add a result
+        </a>
+    {% endif %}
+</header>
+
+{% if not pregnancy %}
+    <div class="panel" data-reveal>
+        <div class="empty">
+            <div class="empty__icon"><svg class="icon"><use href="#i-file"/></svg></div>
+            <h4>No pregnancy profile yet</h4>
+            <p>Your records are linked to your pregnancy. Start your profile and they will appear here.</p>
+            <a href="{% url 'home:kick_counter' %}" class="link-arrow">Get started<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+        </div>
+    </div>
+{% else %}
+
+    {% if open_orders %}
+        <section class="panel panel--accent" data-reveal style="margin-bottom:1.25rem">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Requested by your doctor</h3>
+                    <p class="panel__sub">Please upload these results when you have them.</p>
+                </div>
+                <span class="pill pill--pending">{{ open_orders|length }} open</span>
+            </div>
+            {% for o in open_orders %}
+                <div class="order">
+                    <span class="doc__icon doc__icon--{{ o.request_type|lower }}"><svg class="icon"><use href="#{% if o.request_type == 'Ultrasound' %}i-baby{% else %}i-drop{% endif %}"/></svg></span>
+                    <div class="order__body">
+                        <strong>{{ o.test_name }}</strong>
+                        <span class="muted-sm">{{ o.request_type }} &middot; {{ o.doctor }} &middot; {{ o.requested_at|date:"M j" }}</span>
+                        {% if o.instructions %}<p class="doc__note">{{ o.instructions }}</p>{% endif %}
+                    </div>
+                    <a class="button button--sm" href="{% url 'home:record_upload' %}?request={{ o.pk }}">
+                        <svg class="icon"><use href="#i-upload"/></svg>Upload result
+                    </a>
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    <nav class="seg" aria-label="Record types" data-reveal style="--d: 80ms">
+        <a href="?tab=prescriptions" class="{% if tab == 'prescriptions' %}is-active{% endif %}">Prescriptions <span class="seg__count">{{ counts.prescriptions }}</span></a>
+        <a href="?tab=labs" class="{% if tab == 'labs' %}is-active{% endif %}">Lab results <span class="seg__count">{{ counts.labs }}</span></a>
+        <a href="?tab=ultrasound" class="{% if tab == 'ultrasound' %}is-active{% endif %}">Ultrasound <span class="seg__count">{{ counts.ultrasound }}</span></a>
+    </nav>
+
+    <div class="panel" data-reveal style="--d: 120ms; margin-top:1.25rem">
+        {% for item in items %}
+            {% if tab == 'prescriptions' %}
+                {% include 'home/_rx_card.html' with rx=item %}
+            {% else %}
+                {% include 'home/_record_row.html' with rec=item %}
+            {% endif %}
+        {% empty %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#{% if tab == 'prescriptions' %}i-pill{% else %}i-file{% endif %}"/></svg></div>
+                {% if tab == 'prescriptions' %}
+                    <h4>No prescriptions yet</h4>
+                    <p>When your doctor prescribes something, it will appear here with the dosage and instructions.</p>
+                {% else %}
+                    <h4>No {% if tab == 'labs' %}lab{% else %}ultrasound{% endif %} results yet</h4>
+                    <p>Upload a report as a PDF or photo and it will be saved here for you and your doctor.</p>
+                    <a href="{% url 'home:record_upload' %}" class="link-arrow">Add a result<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <p class="disclaimer">Prescriptions and results are for your reference. Always follow your doctor's instructions, and contact them or emergency services if you feel unwell.</p>
+{% endif %}
+{% endblock %}

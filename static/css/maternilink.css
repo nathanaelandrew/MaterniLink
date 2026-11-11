@@ -2034,3 +2034,60 @@ textarea.form-control { resize: vertical; min-height: 96px; }
 
 /* Let the scrollable charts shrink inside the grid instead of widening the page */
 .trend-grid > * { min-width: 0; }
+
+/* ==========================================================================
+   16. Records: prescriptions, results, orders, notes
+   ========================================================================== */
+   .panel--accent { border-color: #F0D9A6; background: linear-gradient(180deg, #FFFBF1, #fff 60%); }
+   .panel__tools { display: flex; gap: .4rem; flex-wrap: wrap; }
+   
+   .notice { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.25rem; padding: .9rem 1.1rem; border-radius: 16px; background: var(--amber-bg); color: var(--amber-ink); text-decoration: none; font-size: .92rem; transition: transform .25s var(--ease), box-shadow .25s; }
+   .notice:hover { transform: translateY(-2px); box-shadow: var(--shadow); color: var(--amber-ink); }
+   .notice .icon { flex: none; width: 19px; height: 19px; }
+   .notice__go { margin-left: auto; transition: transform .25s var(--ease); }
+   .notice:hover .notice__go { transform: translateX(4px); }
+   
+   /* Prescription card */
+   .rx { display: flex; gap: 1rem; padding: 1.1rem 0; border-top: 1px solid var(--line-soft); }
+   .rx:first-child, .panel__head + .rx { border-top: 0; padding-top: .25rem; }
+   .rx__icon, .doc__icon { flex: none; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--clay-50); color: #8A4A35; }
+   .rx__icon .icon, .doc__icon .icon { width: 20px; height: 20px; }
+   .rx__body { min-width: 0; }
+   .rx__body h4 { margin: 0 0 .2rem; font-size: 1.1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+   .rx__line { margin: 0 0 .35rem; font-weight: 500; }
+   .rx__note { margin: 0 0 .5rem; padding: .6rem .8rem; border-radius: 10px; background: var(--surface-soft); font-size: .88rem; color: var(--ink-soft); }
+   
+   /* Result files and test requests */
+   .doc, .order { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; padding: 1rem 0; border-top: 1px solid var(--line-soft); }
+   .doc:first-child, .order:first-child, .panel__head + .doc, .panel__head + .order { border-top: 0; padding-top: .25rem; }
+   .doc__icon--laboratory { background: var(--clay-50); color: #8A4A35; }
+   .doc__icon--ultrasound { background: var(--sage-100); color: var(--sage-700); }
+   .doc__body, .order__body { min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+   .doc__body strong, .order__body strong { overflow-wrap: anywhere; }
+   .doc__note { margin: .35rem 0 0; font-size: .86rem; color: var(--ink-soft); }
+   .doc__actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+   .order__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .5rem; }
+   .order__actions form { margin: 0; }
+   
+   /* Visit rows on the patient chart */
+   .sched-end { display: flex; flex-direction: column; align-items: flex-end; gap: .4rem; }
+   
+   /* Clinical notes */
+   .note { padding: 1rem 0; border-top: 1px solid var(--line-soft); }
+   .panel__head + .note { border-top: 0; padding-top: .25rem; }
+   .note__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
+   .note p { margin: 0 0 .3rem; font-size: .9rem; color: var(--ink-soft); }
+   .note p b { color: var(--ink); font-weight: 600; }
+   
+   @media (max-width: 767.98px) {
+       .tabbar--6 { grid-template-columns: repeat(6, 1fr); }
+       .tabbar--6 a { font-size: .56rem; }
+       .doc, .order { grid-template-columns: auto 1fr; }
+       .doc__actions, .order > .button { grid-column: 1 / -1; justify-content: flex-start; }
+       .sched-item .sched-end { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+   }
+   
+   .seg a { white-space: nowrap; }
+   @media (max-width: 767.98px) {
+       .seg a { font-size: .8rem; padding: .55rem .35rem; gap: .35rem; }
+   }

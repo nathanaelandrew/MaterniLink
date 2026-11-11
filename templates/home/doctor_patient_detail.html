@@ -148,20 +148,120 @@
                         <div class="sched-name">{{ appt.scheduled_datetime|time:"h:i A" }} &middot; {{ appt.scheduled_datetime|date:"l" }}</div>
                         <div class="muted-sm">{{ appt.reason|truncatechars:80 }}</div>
                     </div>
-                    {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
-                        <span class="pill pill--dot pill--ok">Accepted</span>
-                    {% elif appt.status == 'Declined' %}
-                        <span class="pill pill--dot pill--bad">Declined</span>
-                    {% elif appt.status == 'Rescheduled' %}
-                        <span class="pill pill--dot pill--info">Rescheduled</span>
-                    {% else %}
-                        <span class="pill pill--dot pill--pending">Pending</span>
-                    {% endif %}
+                    <div class="sched-end">
+                        {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
+                            <span class="pill pill--dot pill--ok">Accepted</span>
+                        {% elif appt.status == 'Declined' %}
+                            <span class="pill pill--dot pill--bad">Declined</span>
+                        {% elif appt.status == 'Rescheduled' %}
+                            <span class="pill pill--dot pill--info">Rescheduled</span>
+                        {% else %}
+                            <span class="pill pill--dot pill--pending">Pending</span>
+                        {% endif %}
+                        {% if appt.can_note %}
+                            <a class="button button--sm button--soft" href="{% url 'home:doctor_note' appt.pk %}">
+                                <svg class="icon"><use href="#i-clipboard"/></svg>{% if appt.has_note %}Edit note{% else %}Add note{% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             {% empty %}
                 <div class="empty" style="padding:1rem 0">
                     <p class="mb-0">No visits with you yet.</p>
                 </div>
+            {% endfor %}
+        </section>
+
+        <!-- Clinical notes -->
+        <section class="panel" data-reveal style="--d: 220ms">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Clinical notes</h3>
+                    <p class="panel__sub">Add a note from any accepted visit above.</p>
+                </div>
+            </div>
+            {% for n in notes %}
+                <div class="note">
+                    <div class="note__head">
+                        <strong>{{ n.appointment.scheduled_datetime|date:"M j, Y" }}</strong>
+                        <a class="link-arrow" href="{% url 'home:doctor_note' n.appointment_id %}">Edit<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+                    </div>
+                    <p><b>Assessment:</b> {{ n.assessment|truncatechars:160 }}</p>
+                    <p><b>Plan:</b> {{ n.clinical_plan|truncatechars:160 }}</p>
+                </div>
+            {% empty %}
+                <div class="empty" style="padding:1rem 0">
+                    <p class="mb-0">No clinical notes yet.</p>
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- Prescriptions -->
+        <section class="panel" data-reveal style="--d: 240ms">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Prescriptions</h3>
+                    <p class="panel__sub">Visible to the patient under Records.</p>
+                </div>
+                {% if pregnancy %}
+                    <a href="{% url 'home:doctor_prescribe' patient.pk %}" class="button button--sm">
+                        <svg class="icon"><use href="#i-plus"/></svg>Prescribe
+                    </a>
+                {% endif %}
+            </div>
+            {% for rx in prescriptions %}
+                {% include 'home/_rx_card.html' with rx=rx %}
+            {% empty %}
+                <div class="empty" style="padding:1rem 0">
+                    <p class="mb-0">No prescriptions yet.</p>
+                </div>
+            {% endfor %}
+        </section>
+
+        <!-- Lab and imaging -->
+        <section class="panel" data-reveal style="--d: 260ms">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Lab &amp; imaging</h3>
+                    <p class="panel__sub">Requests you sent and results on file.</p>
+                </div>
+                {% if pregnancy %}
+                    <div class="panel__tools">
+                        <a href="{% url 'home:doctor_orders' %}?patient={{ patient.pk }}" class="button button--sm">
+                            <svg class="icon"><use href="#i-plus"/></svg>Request
+                        </a>
+                        <a href="{% url 'home:doctor_upload' patient.pk %}" class="button button--sm button--soft">
+                            <svg class="icon"><use href="#i-upload"/></svg>Upload
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% for o in orders %}
+                <div class="order">
+                    <span class="doc__icon doc__icon--{{ o.request_type|lower }}"><svg class="icon"><use href="#{% if o.request_type == 'Ultrasound' %}i-baby{% else %}i-drop{% endif %}"/></svg></span>
+                    <div class="order__body">
+                        <strong>{{ o.test_name }}</strong>
+                        <span class="muted-sm">{{ o.request_type }} &middot; requested {{ o.requested_at|date:"M j" }}</span>
+                    </div>
+                    {% if o.status == 'Requested' %}
+                        <span class="pill pill--dot pill--pending">Waiting</span>
+                    {% elif o.status == 'Completed' %}
+                        <span class="pill pill--dot pill--ok">Received</span>
+                    {% else %}
+                        <span class="pill pill--neutral">{{ o.status }}</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            {% for rec in results %}
+                {% include 'home/_record_row.html' with rec=rec %}
+            {% empty %}
+                {% if not orders %}
+                    <div class="empty" style="padding:1rem 0">
+                        <p class="mb-0">No requests or results yet.</p>
+                    </div>
+                {% endif %}
             {% endfor %}
         </section>
     </div>

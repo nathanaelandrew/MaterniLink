@@ -31,6 +31,14 @@
     </a>
 </section>
 
+{% if open_requests %}
+<a href="{% url 'home:records' %}" class="notice" data-reveal>
+    <svg class="icon"><use href="#i-info"/></svg>
+    <span><strong>Your doctor requested {{ open_requests }} test{{ open_requests|pluralize }}.</strong> Upload the result when it is ready.</span>
+    <svg class="icon notice__go"><use href="#i-arrow-right"/></svg>
+</a>
+{% endif %}
+
 <div class="dash">
     <!-- Pregnancy progress -->
     <section class="dash__hero" data-reveal style="--d: 120ms">

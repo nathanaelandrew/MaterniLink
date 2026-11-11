@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ heading }} · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<a href="{{ back_url }}" class="back-link" data-reveal>
+    <svg class="icon"><use href="#i-arrow-left"/></svg>Back
+</a>
+
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Records</span>
+        <h1 class="page-title" style="font-size:clamp(1.8rem,3.4vw,2.5rem)">{{ heading }}</h1>
+        <p class="page-lead">{{ lead }}</p>
+    </div>
+</header>
+
+<section class="panel" data-reveal style="--d: 80ms">
+    {% if order %}
+        <div class="callout callout--high" style="margin:0 0 1.25rem">
+            <svg class="icon"><use href="#i-info"/></svg>
+            <div>
+                <strong>Responding to a request</strong>
+                <p>{{ order.request_type }}: {{ order.test_name }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if order %}
+            <input type="hidden" name="request_id" value="{{ order.pk }}">
+            <input type="hidden" name="record_type" value="{{ order.request_type }}">
+        {% else %}
+            <div class="field">
+                <span class="field__label">Type</span>
+                <div class="chips">
+                    {% for value, label in form.record_type.field.choices %}
+                        <label class="chip">
+                            <input type="radio" name="record_type" value="{{ value }}" {% if form.record_type.value == value %}checked{% endif %}>
+                            <span><svg class="icon"><use href="#{% if value == 'Ultrasound' %}i-baby{% else %}i-drop{% endif %}"/></svg>{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="field {% if form.file.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.file.id_for_label }}">File</label>
+            {{ form.file }}
+            <div class="field__hint">PDF, JPG or PNG, up to 10 MB.</div>
+            {% if form.file.errors %}<div class="field__error">{{ form.file.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+            <label class="field__label" for="{{ form.summary_notes.id_for_label }}">Note</label>
+            {{ form.summary_notes }}
+        </div>
+
+        <button type="submit" class="button button--lg button--block mt-2">
+            <svg class="icon"><use href="#i-upload"/></svg>Upload
+        </button>
+    </form>
+</section>
+{% endblock %}

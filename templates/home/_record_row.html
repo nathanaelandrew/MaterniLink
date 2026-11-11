@@ -1,0 +1,18 @@
+{% comment %}One uploaded result. Expects: rec.{% endcomment %}
+<div class="doc">
+    <span class="doc__icon doc__icon--{{ rec.record_type|lower }}"><svg class="icon"><use href="#{% if rec.record_type == 'Ultrasound' %}i-baby{% else %}i-drop{% endif %}"/></svg></span>
+    <div class="doc__body">
+        <strong>{{ rec.original_name|default:"Result" }}</strong>
+        <span class="muted-sm">
+            {{ rec.record_type }} &middot; {{ rec.uploaded_at|date:"M j, Y" }} &middot;
+            added by {% if rec.uploaded_by_user_id == request.user.pk %}you{% else %}{{ rec.uploaded_by_user.get_full_name|default:rec.uploaded_by_user.username }}{% endif %}
+        </span>
+        {% if rec.summary_notes %}<p class="doc__note">{{ rec.summary_notes }}</p>{% endif %}
+    </div>
+    {% if rec.file %}
+        <div class="doc__actions">
+            <a class="button button--sm button--soft" href="{% url 'home:record_file' rec.pk %}" target="_blank" rel="noopener">View</a>
+            <a class="button button--sm button--ghost" href="{% url 'home:record_file' rec.pk %}?download=1">Download</a>
+        </div>
+    {% endif %}
+</div>

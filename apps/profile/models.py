@@ -1,3 +1,6 @@
+import os
+import uuid
+from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -116,6 +119,7 @@ class MedicalOrderRequest(models.Model):
     test_name = models.CharField(max_length=200)
     status = models.CharField(max_length=50)
     instructions = models.TextField()
+    requested_at = models.DateTimeField(default=timezone.now)
 
 class Prescription(models.Model):
     prescription_id = models.BigAutoField(primary_key=True)
@@ -128,14 +132,20 @@ class Prescription(models.Model):
     instructions = models.TextField()
     prescribed_date = models.DateField()
 
+def record_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1].lower()
+    return f"records/{instance.pregnancy_id}/{uuid.uuid4().hex}{ext}"
+
 class MedicalRecord(models.Model):
     record_id = models.BigAutoField(primary_key=True)
     pregnancy = models.ForeignKey(PregnancyProfile, on_delete=models.CASCADE)
     request = models.ForeignKey(MedicalOrderRequest, on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_by_user = models.ForeignKey(User, on_delete=models.CASCADE)
-    file_url = models.URLField(max_length=500)
+    file_url = models.URLField(max_length=500, blank=True, default='')
+    file = models.FileField(upload_to=record_upload_path, blank=True)
+    original_name = models.CharField(max_length=255, blank=True)
     record_type = models.CharField(max_length=100)
-    summary_notes = models.TextField()
+    summary_notes = models.TextField(blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 # --- 7. Messaging & Reminders ---

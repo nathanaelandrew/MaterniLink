@@ -15,11 +15,15 @@ from django.views.decorators.http import require_POST
 
 from apps.profile.models import (
     Appointment,
+    ClinicalNote,
     DoctorProfile,
     KickCountLog,
     MaternalHealthLog,
+    MedicalOrderRequest,
+    MedicalRecord,
     MotherProfile,
     PregnancyProfile,
+    Prescription,
 )
 
 # Statuses that mean "this visit has a time on the doctor's calendar".
@@ -262,7 +266,18 @@ def doctor_patient_detail(request, doctor, mother_id):
 
     logs = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date')[:8] if pregnancy else []
     kicks = KickCountLog.objects.filter(pregnancy=pregnancy).order_by('-start_time')[:5] if pregnancy else []
-    visits = Appointment.objects.filter(mother=mother, doctor=doctor).order_by('-scheduled_datetime')[:10]
+    visits = list(Appointment.objects.filter(mother=mother, doctor=doctor).order_by('-scheduled_datetime')[:10])
+    noted = set(ClinicalNote.objects.filter(appointment__in=visits).values_list('appointment_id', flat=True))
+    for v in visits:
+        v.can_note = v.status in CONFIRMED
+        v.has_note = v.pk in noted
+
+    prescriptions, orders, results, notes = [], [], [], []
+    if pregnancy:
+        prescriptions = Prescription.objects.filter(pregnancy=pregnancy).select_related('doctor').order_by('-prescribed_date', '-pk')[:6]
+        orders = MedicalOrderRequest.objects.filter(pregnancy=pregnancy, doctor=doctor).order_by('-requested_at')[:6]
+        results = MedicalRecord.objects.filter(pregnancy=pregnancy).select_related('uploaded_by_user').order_by('-uploaded_at')[:6]
+        notes = ClinicalNote.objects.filter(pregnancy=pregnancy, doctor=doctor).select_related('appointment').order_by('-recorded_at')[:5]
 
     return render(request, 'home/doctor_patient_detail.html', {
         'doctor': doctor,
@@ -276,6 +291,10 @@ def doctor_patient_detail(request, doctor, mother_id):
         'logs': logs,
         'kicks': kicks,
         'visits': visits,
+        'prescriptions': prescriptions,
+        'orders': orders,
+        'results': results,
+        'notes': notes,
     })
 
 

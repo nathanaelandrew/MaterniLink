@@ -63,6 +63,9 @@
         <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h5v5"/></symbol>
         <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
         <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+        <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+        <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></symbol>
     </svg>
 
     {% firstof mother.first_name user.username as display_name %}
@@ -84,13 +87,16 @@
                             <svg class="icon"><use href="#i-calendar"/></svg>Appointments
                         </a>
                         <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:kick_counter' %}is-active{% endif %}" href="{% url 'home:kick_counter' %}">
-                            <svg class="icon"><use href="#i-motion"/></svg>Kick counter
+                            <svg class="icon"><use href="#i-motion"/></svg>Kicks
                         </a>
                         <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:trends' %}is-active{% endif %}" href="{% url 'home:trends' %}">
                             <svg class="icon"><use href="#i-trend"/></svg>Trends
                         </a>
                         <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:reminders' %}is-active{% endif %}" href="{% url 'home:reminders' %}">
                             <svg class="icon"><use href="#i-bell"/></svg>Reminders
+                        </a>
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:records' or request.resolver_match.view_name == 'home:record_upload' %}is-active{% endif %}" href="{% url 'home:records' %}">
+                            <svg class="icon"><use href="#i-file"/></svg>Records
                         </a>
                     </nav>
                 {% else %}
@@ -103,6 +109,9 @@
                         </a>
                         <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_patients' or request.resolver_match.view_name == 'home:doctor_patient_detail' %}is-active{% endif %}" href="{% url 'home:doctor_patients' %}">
                             <svg class="icon"><use href="#i-users"/></svg>Patients
+                        </a>
+                        <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_orders' %}is-active{% endif %}" href="{% url 'home:doctor_orders' %}">
+                            <svg class="icon"><use href="#i-clipboard"/></svg>Orders
                         </a>
                         <a class="nav-link-pill {% if request.resolver_match.view_name == 'home:doctor_calendar' %}is-active{% endif %}" href="{% url 'home:doctor_calendar' %}">
                             <svg class="icon"><use href="#i-calendar-days"/></svg>Calendar
@@ -174,10 +183,12 @@
             <a href="{% url 'home:reminders' %}" class="{% if request.resolver_match.view_name == 'home:reminders' %}is-active{% endif %}">
                 <svg class="icon"><use href="#i-bell"/></svg>Reminders
             </a>
-        </nav>
+            <a href="{% url 'home:records' %}" class="{% if request.resolver_match.view_name == 'home:records' or request.resolver_match.view_name == 'home:record_upload' %}is-active{% endif %}">
+                <svg class="icon"><use href="#i-file"/></svg>Records
+            </a>
         {% elif user.is_authenticated %}
             <!-- Mobile bottom navigation (doctors) -->
-            <nav class="tabbar tabbar--4" aria-label="Primary mobile">
+            <nav class="tabbar tabbar--5" aria-label="Primary mobile">
                 <a href="{% url 'home:dashboard' %}" class="{% if request.resolver_match.view_name == 'home:dashboard' %}is-active{% endif %}">
                     <svg class="icon"><use href="#i-home"/></svg>Home
                 </a>
@@ -186,6 +197,9 @@
                 </a>
                 <a href="{% url 'home:doctor_patients' %}" class="{% if request.resolver_match.view_name == 'home:doctor_patients' or request.resolver_match.view_name == 'home:doctor_patient_detail' %}is-active{% endif %}">
                     <svg class="icon"><use href="#i-users"/></svg>Patients
+                </a>
+                <a href="{% url 'home:doctor_orders' %}" class="{% if request.resolver_match.view_name == 'home:doctor_orders' %}is-active{% endif %}">
+                    <svg class="icon"><use href="#i-clipboard"/></svg>Orders
                 </a>
                 <a href="{% url 'home:doctor_calendar' %}" class="{% if request.resolver_match.view_name == 'home:doctor_calendar' %}is-active{% endif %}">
                     <svg class="icon"><use href="#i-calendar-days"/></svg>Calendar
