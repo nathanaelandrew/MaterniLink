@@ -1,127 +1,154 @@
 {% extends 'base.html' %}
 
+{% block title %}Dashboard · MaterniLink{% endblock %}
+
 {% block content %}
-<!-- Header Section with Direct Actions -->
-<div class="row mb-5 align-items-end">
-    <div class="col-md-6">
-        <h1 class="display-4" style="font-family: 'Playfair Display', serif; color: var(--text-main);">
-            Hello, {{ mother.first_name|default:user.username }}.
-        </h1>
-        <p class="lead text-muted mb-0">How are you feeling today?</p>
+<!-- Greeting -->
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">{% now "l, F j" %}</span>
+        <h1 class="page-title">Hello, {{ mother.first_name|default:user.username }}.</h1>
+        <p class="page-lead">How are you feeling today? Here is a calm look at where you and your baby are this week.</p>
     </div>
-    <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end flex-wrap">
-        <!-- 1. Direct Kick Counter Button -->
-        <a href="{% url 'home:kick_counter' %}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
-            🦶 Kick Counter
-        </a>
-        <!-- 2. Direct Appointment Booking Button -->
-        <a href="{% url 'profile:appointments' %}" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
-            🗓️ Book Appointment
-        </a>
-        <!-- 3. Record Vitals Button -->
-        <a href="{% url 'profile:add_health_log' %}" class="btn btn-sage shadow-sm px-4">
-            + Record Today's Vitals
-        </a>
-    </div>
-</div>
+</header>
 
-<div class="row g-4">
-    <!-- 1. Pregnancy Progress Card -->
-    <div class="col-md-4">
-        <div class="card p-4 h-100 border-0" style="background-color: #E9EDEA;">
-            <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Pregnancy Progress</h5>
-            <div class="text-center py-3">
-                <h2 class="display-1 fw-bold" style="color: var(--sage-dark);">{{ weeks }}</h2>
-                <p class="fw-bold mb-0">Weeks</p>
-            </div>
-            <div class="progress bg-white mt-3" style="height: 8px; border-radius: 10px;">
-                <div class="progress-bar" style="background-color: var(--sage-green); width: {% widthratio weeks 40 100 %}%"></div>
-            </div>
-            <div class="d-flex justify-content-between mt-2 small opacity-50">
-                <span>Start</span>
-                <span>Full Term (40w)</span>
-            </div>
-        </div>
-    </div>
+<!-- Quick actions -->
+<section class="actions" data-stagger="80" aria-label="Quick actions">
+    <a href="{% url 'profile:add_health_log' %}" class="action action--primary" data-reveal>
+        <span class="action__icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
+        <span class="action__text"><strong>Record today's vitals</strong><span>Weight and blood pressure</span></span>
+        <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
+    </a>
+    <a href="{% url 'home:kick_counter' %}" class="action" data-reveal>
+        <span class="action__icon"><svg class="icon"><use href="#i-motion"/></svg></span>
+        <span class="action__text"><strong>Kick counter</strong><span>Log baby's movements</span></span>
+        <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
+    </a>
+    <a href="{% url 'profile:appointments' %}" class="action" data-reveal>
+        <span class="action__icon"><svg class="icon"><use href="#i-calendar-plus"/></svg></span>
+        <span class="action__text"><strong>Book appointment</strong><span>Request a visit</span></span>
+        <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
+    </a>
+</section>
 
-    <!-- 2. Latest Health Metrics Card -->
-    <div class="col-md-8">
-        <div class="card p-4 h-100">
-            <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Latest Health Metrics</h5>
-            <div class="row text-center mt-3">
-                <div class="col-6 border-end">
-                    <p class="small text-muted mb-1">Blood Pressure</p>
-                    <h3 class="fw-bold text-dark">
-                        {% if latest_log %}{{ latest_log.systolic_bp }}/{{ latest_log.diastolic_bp }}{% else %}--{% endif %}
-                        <small class="fs-6 fw-normal text-muted">mmHg</small>
-                    </h3>
-                </div>
-                <div class="col-6">
-                    <p class="small text-muted mb-1">Current Weight</p>
-                    <h3 class="fw-bold text-dark">
-                        {% if latest_log %}{{ latest_log.weight_kg }}{% else %}--{% endif %}
-                        <small class="fs-6 fw-normal text-muted">kg</small>
-                    </h3>
+<div class="dash">
+    <!-- Pregnancy progress -->
+    <section class="dash__hero" data-reveal style="--d: 120ms">
+        <div class="hero">
+            <div>
+                <span class="eyebrow">Pregnancy progress</span>
+                <h2 class="hero__title">
+                    {% if weeks < 14 %}First{% elif weeks < 28 %}Second{% else %}Third{% endif %} trimester
+                </h2>
+                <p class="hero__meta">
+                    {% if weeks < 40 %}
+                        About {{ weeks|add:"-40"|cut:"-" }} weeks until full term (40 weeks).
+                    {% else %}
+                        You have reached full term. Your care team is with you.
+                    {% endif %}
+                </p>
+                <div class="trimesters" aria-label="Trimester">
+                    <span class="tri {% if weeks >= 14 %}is-done{% elif weeks < 14 %}is-active{% endif %}">
+                        {% if weeks >= 14 %}<svg class="icon" style="width:13px;height:13px"><use href="#i-check"/></svg>{% endif %}Trimester 1
+                    </span>
+                    <span class="tri {% if weeks >= 28 %}is-done{% elif weeks >= 14 %}is-active{% endif %}">
+                        {% if weeks >= 28 %}<svg class="icon" style="width:13px;height:13px"><use href="#i-check"/></svg>{% endif %}Trimester 2
+                    </span>
+                    <span class="tri {% if weeks >= 28 %}is-active{% endif %}">Trimester 3</span>
                 </div>
             </div>
-            <hr class="my-4" style="border-color: rgba(143,169,152,0.2);">
-            <div class="text-center">
-                <p class="small text-muted mb-0">Your data is securely synced with <b style="color: var(--sage-dark);">{{ doctor_name|default:"Dr. Mendoza" }}</b></p>
+
+            <div class="ring" style="--p: {% widthratio weeks 40 100 %}" role="img" aria-label="{{ weeks }} of 40 weeks">
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="ring__track" cx="60" cy="60" r="54"/>
+                    <circle class="ring__bar" cx="60" cy="60" r="54"/>
+                </svg>
+                <div class="ring__center">
+                    <span class="ring__num" data-count="{{ weeks }}">{{ weeks }}</span>
+                    <span class="ring__unit">Weeks</span>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- 3. Upcoming Appointments Section with Status Badges and Active Links -->
-<div class="row mt-4 mb-5">
-    <div class="col-12">
-        <div class="card p-4 border-0 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="small fw-bold text-uppercase opacity-50 mb-0">Upcoming Appointments</h5>
-                <a href="{% url 'profile:appointments' %}" class="small fw-bold text-decoration-none" style="color: var(--sage-dark);">
-                    View All & Request Visit →
+    <!-- Latest health metrics -->
+    <section class="dash__side" data-stagger="100">
+        <div class="panel stat" data-reveal style="--d: 200ms">
+            <span class="stat__icon stat__icon--clay"><svg class="icon"><use href="#i-drop"/></svg></span>
+            <div>
+                <span class="label-caps">Blood pressure</span>
+                <p class="stat__value">
+                    {% if latest_log %}<span data-count="{{ latest_log.systolic_bp }}">{{ latest_log.systolic_bp }}</span>/<span data-count="{{ latest_log.diastolic_bp }}">{{ latest_log.diastolic_bp }}</span>{% else %}--{% endif %}
+                    <small>mmHg</small>
+                </p>
+            </div>
+        </div>
+
+        <div class="panel stat" data-reveal style="--d: 300ms">
+            <span class="stat__icon"><svg class="icon"><use href="#i-weight"/></svg></span>
+            <div>
+                <span class="label-caps">Current weight</span>
+                <p class="stat__value">
+                    {% if latest_log %}<span data-count="{{ latest_log.weight_kg|stringformat:'s' }}" data-decimals="2">{{ latest_log.weight_kg }}</span>{% else %}--{% endif %}
+                    <small>kg</small>
+                </p>
+            </div>
+        </div>
+
+        <div class="sync-note" data-reveal style="--d: 400ms">
+            <svg class="icon"><use href="#i-shield"/></svg>
+            <span>Your data is securely synced with <b>{{ doctor_name|default:"Dr. Mendoza" }}</b></span>
+        </div>
+    </section>
+
+    <!-- Upcoming appointments -->
+    <section class="dash__wide" data-reveal style="--d: 150ms">
+        <div class="panel">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Upcoming appointments</h3>
+                    <p class="panel__sub">Your next visits and their current status.</p>
+                </div>
+                <a href="{% url 'profile:appointments' %}" class="link-arrow">
+                    View all &amp; request a visit
+                    <svg class="icon"><use href="#i-arrow-right"/></svg>
                 </a>
             </div>
 
-            <div class="row align-items-center g-3">
+            <div class="appt-grid">
                 {% for appt in appointments %}
-                    <div class="col-md-4 {% if not forloop.last %}border-end{% endif %}">
-                        <div class="d-flex align-items-center p-2">
-                            <div class="text-center me-3 px-3 py-2 rounded" style="background-color: #FDFBF7; border: 1px solid #E9EDEA; min-width: 58px;">
-                                <div class="small text-uppercase fw-bold text-muted" style="font-size: 0.7rem;">{{ appt.scheduled_datetime|date:"M" }}</div>
-                                <div class="h4 mb-0 fw-bold" style="color: var(--sage-dark);">{{ appt.scheduled_datetime|date:"d" }}</div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="fw-bold text-dark small">{{ appt.scheduled_datetime|date:"h:i A" }}</span>
-                                    {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
-                                        <span class="badge rounded-pill px-2 py-1" style="background-color: #E9EDEA; color: #4A5D50; font-size: 0.65rem;">
-                                            ● Accepted
-                                        </span>
-                                    {% elif appt.status == 'Declined' %}
-                                        <span class="badge rounded-pill px-2 py-1" style="background-color: #FDE8E8; color: #9B1C1C; font-size: 0.65rem;">
-                                            ● Declined
-                                        </span>
-                                    {% else %}
-                                        <span class="badge rounded-pill px-2 py-1" style="background-color: #FFF6E5; color: #B7791F; font-size: 0.65rem;">
-                                            ● Pending
-                                        </span>
-                                    {% endif %}
-                                </div>
-                                <p class="mb-0 small text-muted text-truncate" style="max-width: 180px;">{{ appt.reason }}</p>
-                            </div>
+                    <article class="appt-mini">
+                        <div class="date-chip">
+                            <span>{{ appt.scheduled_datetime|date:"M" }}</span>
+                            <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
                         </div>
-                    </div>
+                        <div class="appt-mini__body">
+                            <div class="appt-mini__top">
+                                <span class="appt-mini__time">{{ appt.scheduled_datetime|date:"h:i A" }}</span>
+                                {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
+                                    <span class="pill pill--dot pill--ok">Accepted</span>
+                                {% elif appt.status == 'Declined' %}
+                                    <span class="pill pill--dot pill--bad">Declined</span>
+                                {% else %}
+                                    <span class="pill pill--dot pill--pending">Pending</span>
+                                {% endif %}
+                            </div>
+                            <p class="appt-mini__reason">{{ appt.reason }}</p>
+                        </div>
+                    </article>
                 {% empty %}
-                    <div class="col-12 text-center py-4">
-                        <p class="small text-muted mb-2 italic">No upcoming appointments scheduled.</p>
-                        <a href="{% url 'profile:appointments' %}" class="small fw-bold text-decoration-none" style="color: var(--sage-dark);">
-                            Request an appointment now →
+                    <div class="empty" style="grid-column: 1 / -1;">
+                        <div class="empty__icon"><svg class="icon"><use href="#i-calendar"/></svg></div>
+                        <h4>No upcoming appointments</h4>
+                        <p>When you request a visit, it will appear here with its status.</p>
+                        <a href="{% url 'profile:appointments' %}" class="link-arrow">
+                            Request an appointment
+                            <svg class="icon"><use href="#i-arrow-right"/></svg>
                         </a>
                     </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

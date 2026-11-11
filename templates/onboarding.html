@@ -1,28 +1,42 @@
 {% extends 'base.html' %}
 
+{% block title %}MaterniLink · Your digital pregnancy companion{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-8 text-center">
-        <h1 class="display-2 mb-4" style="color: var(--sage-dark); font-family: 'Playfair Display', serif;">
-            A gentle journey <br>starts here.
-        </h1>
-        <p class="lead mb-5 mx-auto text-muted" style="max-width: 600px;">
-            MaterniLink connects you with your healthcare provider for a supported, serene pregnancy experience.
-        </p>
-        
-        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
-            <!-- These links now work because of your URL names -->
-            <a href="{% url 'login:login' %}" class="btn btn-sage btn-lg px-5 shadow-sm">
-                Log in to Dashboard
-            </a>
-            <a href="{% url 'register:register' %}" class="btn btn-outline-secondary btn-lg px-5 rounded-pill border-2">
-                Join the Community
-            </a>
+<section class="hero-landing">
+    <span class="hero-landing__orb orb-a" aria-hidden="true"></span>
+    <span class="hero-landing__orb orb-b" aria-hidden="true"></span>
+
+    <span class="eyebrow" data-reveal>Your digital pregnancy companion</span>
+    <h1 data-reveal style="--d: 80ms">A gentle journey <em>starts here.</em></h1>
+    <p class="lead" data-reveal style="--d: 160ms">
+        MaterniLink connects you with your healthcare provider for a supported, serene pregnancy experience.
+    </p>
+
+    <div class="cta-row" data-reveal style="--d: 240ms">
+        <a href="{% url 'login:login' %}" class="button button--lg">
+            Log in to dashboard
+            <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
+        </a>
+        <a href="{% url 'register:register' %}" class="button button--lg button--ghost">Join the community</a>
+    </div>
+
+    <div class="features" data-stagger="100">
+        <div class="feature" data-reveal>
+            <span class="stat__icon"><svg class="icon"><use href="#i-calendar-plus"/></svg></span>
+            <h3>Appointments, simplified</h3>
+            <p>Request visits and follow their status without a single phone call.</p>
         </div>
-        
-        <div class="mt-5 pt-5 opacity-50">
-            <p class="small text-uppercase tracking-widest fw-bold" style="color: var(--sage-dark);">Professional Maternity Care</p>
+        <div class="feature" data-reveal>
+            <span class="stat__icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
+            <h3>Track what matters</h3>
+            <p>Weight, blood pressure and baby's movements, all in one timeline.</p>
+        </div>
+        <div class="feature" data-reveal>
+            <span class="stat__icon"><svg class="icon"><use href="#i-shield"/></svg></span>
+            <h3>Connected to your doctor</h3>
+            <p>Your records stay organised and securely shared with your care team.</p>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

@@ -1,44 +1,49 @@
 {% extends 'base.html' %}
 
+{% block title %}Start tracking · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center py-5">
-    <div class="col-md-6">
-        <div class="card p-5 border-0 shadow-sm">
-            <div class="text-center mb-5">
-                <h2 class="display-6">Let's begin your journey.</h2>
-                <p class="text-muted">Tell us when your last period started and we'll estimate your due date and start tracking your progress.</p>
-            </div>
-
-            <form method="POST" novalidate>
-                {% csrf_token %}
-
-                <label for="{{ form.lmp_date.id_for_label }}" class="small fw-bold text-uppercase opacity-50 mb-2">
-                    {{ form.lmp_date.label }}
-                </label>
-                {{ form.lmp_date }}
-                {% for error in form.lmp_date.errors %}
-                    <div class="small text-danger mt-2">{{ error }}</div>
-                {% endfor %}
-
-                <!-- Live preview, filled in by the script below -->
-                <div id="edd-preview" class="mt-4 p-3 text-center rounded-4 d-none" style="background-color: #E9EDEA;">
-                    <p class="small text-uppercase fw-bold opacity-50 mb-1">Estimated due date</p>
-                    <h3 class="fw-bold mb-1" id="edd-value" style="color: var(--sage-dark);"></h3>
-                    <p class="small text-muted mb-0" id="edd-weeks"></p>
-                </div>
-
-                <p class="small text-muted mt-4 mb-0">
-                    This is an estimate based on a 280-day pregnancy. Your doctor may adjust it after an ultrasound.
-                </p>
-
-                <div class="d-grid gap-3 mt-5">
-                    <button type="submit" class="btn btn-sage btn-lg shadow-sm">Start Tracking</button>
-                    <a href="{% url 'home:dashboard' %}" class="btn btn-link text-muted text-decoration-none small text-center">I'll do this later</a>
-                </div>
-            </form>
-        </div>
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Getting started</span>
+        <h1 class="page-title">Let's begin your journey.</h1>
+        <p class="page-lead">Tell us when your last period started and we'll estimate your due date and start tracking your progress.</p>
     </div>
-</div>
+</header>
+
+<section class="panel" data-reveal style="--d: 100ms">
+    <form method="POST" novalidate>
+        {% csrf_token %}
+
+        <div class="field {% if form.lmp_date.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.lmp_date.id_for_label }}">{{ form.lmp_date.label }}</label>
+            {{ form.lmp_date }}
+            {% for error in form.lmp_date.errors %}
+                <div class="field__error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- Live preview, filled in by the script below -->
+        <div id="edd-preview" class="edd-box d-none">
+            <span class="label-caps">Estimated due date</span>
+            <h3 id="edd-value"></h3>
+            <p class="panel__sub" id="edd-weeks"></p>
+        </div>
+
+        <p class="field__hint mt-3">
+            This is an estimate based on a 280-day pregnancy. Your doctor may adjust it after an ultrasound.
+        </p>
+
+        <div class="stack mt-4">
+            <button type="submit" class="button button--lg button--block">
+                Start tracking
+                <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
+            </button>
+            <a href="{% url 'home:dashboard' %}" class="button button--ghost button--block">I'll do this later</a>
+        </div>
+    </form>
+</section>
 {% endblock %}
 
 {% block scripts %}

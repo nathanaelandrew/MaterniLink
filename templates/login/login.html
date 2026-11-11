@@ -1,39 +1,49 @@
 {% extends 'base.html' %}
 
+{% block title %}Log in · MaterniLink{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
-    <div class="col-md-5">
-        <div class="card p-5">
-            <div class="text-center mb-4">
-                <h2 class="display-6">Welcome back.</h2>
-                <p class="text-muted">Your journey to motherhood, supported.</p>
+<div class="auth-shell">
+    <div class="auth-card page-enter">
+        <div class="auth-card__mark"><svg class="icon"><use href="#i-logo"/></svg></div>
+        <h1>Welcome back.</h1>
+        <p class="auth-card__sub">Your journey to motherhood, supported.</p>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            {% if form.errors %}
+                <div class="form-alert">Those details don't match an account. Please check your username and password.</div>
+            {% endif %}
+
+            <div class="field">
+                <label class="field__label" for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="form-control" placeholder="Enter your username" autocomplete="username" autofocus>
             </div>
-            
-            <form method="POST">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Username</label>
-                    <input type="text" name="username" class="form-control" placeholder="Enter your username">
+
+            <div class="field">
+                <label class="field__label" for="id_password">Password</label>
+                <div class="input-wrap">
+                    <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••" autocomplete="current-password">
+                    <button type="button" class="input-wrap__toggle" data-toggle-password aria-label="Show password">
+                        <svg class="icon icon-on"><use href="#i-eye"/></svg>
+                        <svg class="icon icon-off"><use href="#i-eye-off"/></svg>
+                    </button>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label small fw-bold">Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="••••••••">
-                </div>
-                
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-sage btn-lg">Sign In</button>
-                </div>
-            </form>
-            
-            <div class="text-center mt-4">
-                <p class="small text-muted">
-                    Don't have an account? 
-                    <a href="{% url 'register:register' %}" class="text-decoration-none fw-bold" style="color: var(--sage-dark);">
-                        Join MaterniLink
-                    </a>
-                </p>
             </div>
-        </div>
+
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <button type="submit" class="button button--lg button--block mt-3">
+                Sign in
+                <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
+            </button>
+        </form>
+
+        <p class="auth-foot">
+            Don't have an account?
+            <a href="{% url 'register:register' %}">Join MaterniLink</a>
+        </p>
     </div>
 </div>
 {% endblock %}

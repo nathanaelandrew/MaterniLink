@@ -14,10 +14,13 @@ class SignUpForm(UserCreationForm):
         required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'name@example.com'})
     )
+    # Rendered as two selectable cards in register.html (RadioSelect keeps it
+    # working without JavaScript and keeps the same field name: "role").
     role = forms.ChoiceField(
         choices=ROLE_CHOICES,
         required=True,
-        widget=forms.Select(attrs={'class': 'form-select'})
+        initial='Mother',
+        widget=forms.RadioSelect(attrs={'class': 'role__input'})
     )
 
     class Meta(UserCreationForm.Meta):
@@ -30,3 +33,17 @@ class SignUpForm(UserCreationForm):
         for name, field in self.fields.items():
             if name != 'role':
                 field.widget.attrs.update({'class': 'form-control'})
+
+        self.fields['username'].widget.attrs.update({
+            'placeholder': 'Choose a username',
+            'autocomplete': 'username',
+        })
+        self.fields['email'].widget.attrs.update({'autocomplete': 'email'})
+        self.fields['password1'].widget.attrs.update({
+            'placeholder': 'At least 8 characters',
+            'autocomplete': 'new-password',
+        })
+        self.fields['password2'].widget.attrs.update({
+            'placeholder': 'Repeat password',
+            'autocomplete': 'new-password',
+        })

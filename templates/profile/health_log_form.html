@@ -1,56 +1,58 @@
 {% extends 'base.html' %}
 
+{% block title %}Daily check-in · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center py-5">
-    <div class="col-md-6">
-        <div class="card p-5 border-0 shadow-sm">
-            <div class="text-center mb-5">
-                <h2 class="display-6">Daily Check-in.</h2>
-                <p class="text-muted">Monitoring your vitals helps ensure a healthy journey for you and your baby.</p>
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Vitals</span>
+        <h1 class="page-title">Daily check-in</h1>
+        <p class="page-lead">Monitoring your vitals helps ensure a healthy journey for you and your baby.</p>
+    </div>
+</header>
+
+<section class="panel" data-reveal style="--d: 100ms">
+    <form method="POST" novalidate>
+        {% csrf_token %}
+
+        <div class="field {% if form.log_date.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.log_date.id_for_label }}">Date of recording</label>
+            {{ form.log_date }}
+            {% if form.log_date.errors %}<div class="field__error">{{ form.log_date.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="field-row">
+            <div class="field {% if form.weight_kg.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.weight_kg.id_for_label }}">Weight (kg)</label>
+                {{ form.weight_kg }}
+                {% if form.weight_kg.errors %}<div class="field__error">{{ form.weight_kg.errors.0 }}</div>{% endif %}
             </div>
 
-            <form method="POST">
-                {% csrf_token %}
-                
-                <div class="row g-4">
-                    <!-- Date -->
-                    <div class="col-12">
-                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Date of Recording</label>
-                        {{ form.log_date }}
-                    </div>
-
-                    <!-- Weight -->
-                    <div class="col-md-6">
-                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Weight (kg)</label>
-                        {{ form.weight_kg }}
-                    </div>
-
-                    <!-- BP -->
-                    <div class="col-md-6">
-                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Blood Pressure (S/D)</label>
-                        <div class="input-group">
-                            {{ form.systolic_bp }}
-                            <span class="input-group-text bg-transparent border-0 text-muted">/</span>
-                            {{ form.diastolic_bp }}
-                        </div>
-                    </div>
-
-                    <!-- Notes -->
-                    <div class="col-12">
-                        <label class="small fw-bold text-uppercase opacity-50 mb-2">Symptoms or Notes</label>
-                        {{ form.notes }}
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="col-12 mt-5">
-                        <div class="d-grid gap-3">
-                            <button type="submit" class="btn btn-sage btn-lg shadow-sm">Save Vitals</button>
-                            <a href="{% url 'home:dashboard' %}" class="btn btn-link text-muted text-decoration-none small text-center">Cancel and go back</a>
-                        </div>
-                    </div>
+            <div class="field {% if form.systolic_bp.errors or form.diastolic_bp.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.systolic_bp.id_for_label }}">Blood pressure (systolic / diastolic)</label>
+                <div class="bp-pair">
+                    {{ form.systolic_bp }}
+                    <span class="bp-pair__sep">/</span>
+                    {{ form.diastolic_bp }}
                 </div>
-            </form>
+                {% if form.systolic_bp.errors %}<div class="field__error">{{ form.systolic_bp.errors.0 }}</div>{% endif %}
+                {% if form.diastolic_bp.errors %}<div class="field__error">{{ form.diastolic_bp.errors.0 }}</div>{% endif %}
+            </div>
         </div>
-    </div>
-</div>
+
+        <div class="field {% if form.notes.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.notes.id_for_label }}">Symptoms or notes</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="field__error">{{ form.notes.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="stack mt-4">
+            <button type="submit" class="button button--lg button--block">
+                <svg class="icon"><use href="#i-check"/></svg>Save vitals
+            </button>
+            <a href="{% url 'home:dashboard' %}" class="button button--ghost button--block">Cancel and go back</a>
+        </div>
+    </form>
+</section>
 {% endblock %}
