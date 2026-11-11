@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6">
+        <div class="card p-5 border-0 shadow-sm">
+            <div class="text-center mb-5">
+                <h2 class="display-6">Let's begin your journey.</h2>
+                <p class="text-muted">Tell us when your last period started and we'll estimate your due date and start tracking your progress.</p>
+            </div>
+
+            <form method="POST" novalidate>
+                {% csrf_token %}
+
+                <label for="{{ form.lmp_date.id_for_label }}" class="small fw-bold text-uppercase opacity-50 mb-2">
+                    {{ form.lmp_date.label }}
+                </label>
+                {{ form.lmp_date }}
+                {% for error in form.lmp_date.errors %}
+                    <div class="small text-danger mt-2">{{ error }}</div>
+                {% endfor %}
+
+                <!-- Live preview, filled in by the script below -->
+                <div id="edd-preview" class="mt-4 p-3 text-center rounded-4 d-none" style="background-color: #E9EDEA;">
+                    <p class="small text-uppercase fw-bold opacity-50 mb-1">Estimated due date</p>
+                    <h3 class="fw-bold mb-1" id="edd-value" style="color: var(--sage-dark);"></h3>
+                    <p class="small text-muted mb-0" id="edd-weeks"></p>
+                </div>
+
+                <p class="small text-muted mt-4 mb-0">
+                    This is an estimate based on a 280-day pregnancy. Your doctor may adjust it after an ultrasound.
+                </p>
+
+                <div class="d-grid gap-3 mt-5">
+                    <button type="submit" class="btn btn-sage btn-lg shadow-sm">Start Tracking</button>
+                    <a href="{% url 'home:dashboard' %}" class="btn btn-link text-muted text-decoration-none small text-center">I'll do this later</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var input = document.getElementById('id_lmp_date');
+    var box = document.getElementById('edd-preview');
+    var eddEl = document.getElementById('edd-value');
+    var weeksEl = document.getElementById('edd-weeks');
+    var DAY = 86400000;
+
+    function update() {
+        var parts = input.value.split('-');
+        if (parts.length !== 3) { box.classList.add('d-none'); return; }
+
+        // Work in UTC so daylight-saving shifts can't skew the day count.
+        var lmp = Date.UTC(+parts[0], +parts[1] - 1, +parts[2]);
+        var now = new Date();
+        var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+        var elapsed = Math.round((today - lmp) / DAY);
+
+        if (isNaN(elapsed) || elapsed < 0 || elapsed > 294) { box.classList.add('d-none'); return; }
+
+        var edd = new Date(lmp + 280 * DAY);
+        eddEl.textContent = edd.toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+        });
+        var w = Math.floor(elapsed / 7), d = elapsed % 7;
+        weeksEl.textContent = "You're currently " + w + ' weeks' + (d ? ' and ' + d + (d === 1 ? ' day' : ' days') : '') + ' along.';
+        box.classList.remove('d-none');
+    }
+
+    input.addEventListener('input', update);
+    update();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,582 @@
+diff --git a/apps/home/views.py b/apps/home/views.py
+index 9da2a5c..18340be 100644
+--- a/apps/home/views.py
++++ b/apps/home/views.py
+@@ -1,37 +1,43 @@
+ from django.shortcuts import render
+ from django.contrib.auth.decorators import login_required
++from django.utils import timezone
+ from apps.profile.models import MotherProfile, PregnancyProfile, MaternalHealthLog, Appointment
+-from datetime import date
++from apps.profile.utils import gestational_progress
+ 
+ @login_required
+ def dashboard(request):
+     user = request.user
+-    
++
+     # 1. Fetch Mother Profile from the profile app
+     mother = MotherProfile.objects.filter(user=user).first()
+-    
+-    # 2. Fetch Active Pregnancy & Calculate Weeks
++
++    # 2. Fetch Active Pregnancy & Calculate Progress
+     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
+-    weeks = 0
++    progress = {'weeks': 0, 'days': 0, 'trimester': None, 'days_to_go': None, 'percent': 0}
+     doctor_name = "Dr. Mendoza" # Default fallback
+-    
++
+     if pregnancy:
+-        if pregnancy.lmp_date:
+-            delta = date.today() - pregnancy.lmp_date
+-            weeks = max(0, delta.days // 7)
+-        
++        progress = gestational_progress(pregnancy.lmp_date, timezone.localdate())
++
+         if pregnancy.doctor:
+             doctor_name = f"Dr. {pregnancy.doctor.last_name}"
+-            
++
+     # 3. Get latest vitals for the metrics card
+-    latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
+-    
++    latest_log = None
++    if pregnancy:
++        latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
++
+     # 4. Get upcoming appointments for the bottom section
+     appointments = Appointment.objects.filter(mother=mother).order_by('scheduled_datetime')[:3]
+ 
+     return render(request, 'home/mother_dashboard.html', {
+         'mother': mother,
+-        'weeks': weeks,
++        'pregnancy': pregnancy,
++        'weeks': progress['weeks'],
++        'days_into_week': progress['days'],
++        'trimester': progress['trimester'],
++        'days_to_go': progress['days_to_go'],
++        'progress_percent': progress['percent'],
+         'latest_log': latest_log,
+         'doctor_name': doctor_name,
+         'appointments': appointments
+diff --git a/apps/profile/forms.py b/apps/profile/forms.py
+index 987cc27..7e970b1 100644
+--- a/apps/profile/forms.py
++++ b/apps/profile/forms.py
+@@ -1,6 +1,39 @@
++from datetime import timedelta
++
+ from django import forms
++from django.utils import timezone
++
+ from .models import MaternalHealthLog
+ 
++# Allow a little past 40 weeks (up to 42) for overdue pregnancies.
++MAX_PREGNANCY_DAYS = 294
++
++
++class StartPregnancyForm(forms.Form):
++    lmp_date = forms.DateField(
++        label='First day of your last period',
++        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'id': 'id_lmp_date'}),
++    )
++
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++        today = timezone.localdate()
++        # Browser-side hints; the real validation is in clean_lmp_date().
++        self.fields['lmp_date'].widget.attrs['max'] = today.isoformat()
++        self.fields['lmp_date'].widget.attrs['min'] = (today - timedelta(days=MAX_PREGNANCY_DAYS)).isoformat()
++
++    def clean_lmp_date(self):
++        lmp = self.cleaned_data['lmp_date']
++        today = timezone.localdate()
++        if lmp > today:
++            raise forms.ValidationError("This date can't be in the future.")
++        if (today - lmp).days > MAX_PREGNANCY_DAYS:
++            raise forms.ValidationError(
++                "That was more than 42 weeks ago. Please double-check the date."
++            )
++        return lmp
++
++
+ class MaternalHealthLogForm(forms.ModelForm):
+     class Meta:
+         model = MaternalHealthLog
+diff --git a/apps/profile/tests.py b/apps/profile/tests.py
+new file mode 100644
+index 0000000..bb06085
+--- /dev/null
++++ b/apps/profile/tests.py
+@@ -0,0 +1,118 @@
++from datetime import date, timedelta
++
++from django.test import TestCase
++from django.urls import reverse
++from django.utils import timezone
++
++from .models import MotherProfile, PregnancyProfile, User
++from .utils import calculate_edd, gestational_progress
++
++
++class PregnancyMathTests(TestCase):
++    def test_edd_is_280_days_after_lmp(self):
++        self.assertEqual(calculate_edd(date(2026, 1, 1)), date(2026, 10, 8))
++
++    def test_progress_weeks_days_and_trimesters(self):
++        lmp = date(2026, 1, 1)
++        p = gestational_progress(lmp, lmp + timedelta(days=100))  # 14w2d
++        self.assertEqual((p['weeks'], p['days'], p['trimester']), (14, 2, 2))
++        self.assertEqual(gestational_progress(lmp, lmp + timedelta(days=90))['trimester'], 1)   # 12w6d
++        self.assertEqual(gestational_progress(lmp, lmp + timedelta(days=196))['trimester'], 3)  # 28w0d
++
++    def test_progress_is_capped_and_never_negative(self):
++        lmp = date(2026, 1, 1)
++        late = gestational_progress(lmp, lmp + timedelta(days=290))
++        self.assertEqual(late['percent'], 100)
++        self.assertLess(late['days_to_go'], 0)
++        self.assertEqual(gestational_progress(lmp, lmp - timedelta(days=5))['weeks'], 0)
++
++
++class StartPregnancyFlowTests(TestCase):
++    def setUp(self):
++        self.user = User.objects.create_user('mom', 'mom@example.com', 'pw-12345-xyz', role='Mother')
++        self.mother = MotherProfile.objects.create(user=self.user, date_of_birth='1998-05-01')
++        self.client.force_login(self.user)
++        self.url = reverse('profile:start_pregnancy')
++        self.today = timezone.localdate()
++
++    def _post(self, lmp):
++        return self.client.post(self.url, {'lmp_date': lmp.isoformat()})
++
++    def test_requires_login(self):
++        self.client.logout()
++        response = self.client.get(self.url)
++        self.assertEqual(response.status_code, 302)
++        self.assertIn('/login/', response['Location'])
++
++    def test_page_renders(self):
++        self.assertContains(self.client.get(self.url), 'Start Tracking')
++
++    def test_valid_lmp_creates_pregnancy_with_edd(self):
++        lmp = self.today - timedelta(days=70)
++        response = self._post(lmp)
++        self.assertRedirects(response, reverse('home:dashboard'))
++        preg = PregnancyProfile.objects.get(mother=self.mother)
++        self.assertEqual(preg.lmp_date, lmp)
++        self.assertEqual(preg.edd_date, lmp + timedelta(days=280))
++        self.assertEqual(preg.pregnancy_status, 'Ongoing')
++        self.assertIsNone(preg.doctor)
++
++    def test_future_lmp_is_rejected(self):
++        response = self._post(self.today + timedelta(days=1))
++        self.assertEqual(response.status_code, 200)
++        self.assertTrue(response.context['form'].errors['lmp_date'])
++        self.assertFalse(PregnancyProfile.objects.exists())
++
++    def test_lmp_older_than_42_weeks_is_rejected(self):
++        response = self._post(self.today - timedelta(days=295))
++        self.assertEqual(response.status_code, 200)
++        self.assertFalse(PregnancyProfile.objects.exists())
++
++    def test_cannot_start_second_ongoing_pregnancy(self):
++        self._post(self.today - timedelta(days=30))
++        response = self._post(self.today - timedelta(days=60))
++        self.assertRedirects(response, reverse('home:dashboard'))
++        self.assertEqual(PregnancyProfile.objects.filter(mother=self.mother).count(), 1)
++
++    def test_doctors_are_redirected_away(self):
++        doc = User.objects.create_user('doc', 'doc@example.com', 'pw-12345-xyz', role='Doctor')
++        self.client.force_login(doc)
++        self.assertRedirects(self.client.get(self.url), reverse('home:dashboard'))
++
++
++class DashboardTests(TestCase):
++    def setUp(self):
++        self.user = User.objects.create_user('mom', 'mom@example.com', 'pw-12345-xyz', role='Mother')
++        self.mother = MotherProfile.objects.create(user=self.user, date_of_birth='1998-05-01')
++        self.client.force_login(self.user)
++
++    def test_empty_state_prompts_to_start_pregnancy(self):
++        response = self.client.get(reverse('home:dashboard'))
++        self.assertContains(response, reverse('profile:start_pregnancy'))
++        self.assertNotContains(response, "Record Today's Vitals")
++
++    def test_dashboard_shows_weeks_from_lmp(self):
++        lmp = timezone.localdate() - timedelta(days=100)  # 14 weeks, 2 days
++        PregnancyProfile.objects.create(
++            mother=self.mother, lmp_date=lmp, edd_date=calculate_edd(lmp), pregnancy_status='Ongoing')
++        response = self.client.get(reverse('home:dashboard'))
++        self.assertEqual(response.context['weeks'], 14)
++        self.assertEqual(response.context['trimester'], 2)
++        self.assertContains(response, "Record Today's Vitals")
++        self.assertNotContains(response, 'Set up my pregnancy')
++
++
++class SignupRedirectTests(TestCase):
++    def _register(self, role):
++        return self.client.post(reverse('register:register'), {
++            'username': f'user_{role.lower()}', 'email': f'{role.lower()}@example.com',
++            'password1': 'Str0ngPass!234', 'password2': 'Str0ngPass!234', 'role': role,
++        })
++
++    def test_new_mother_lands_on_start_pregnancy(self):
++        response = self._register('Mother')
++        self.assertRedirects(response, reverse('profile:start_pregnancy'))
++        self.assertTrue(MotherProfile.objects.filter(user__username='user_mother').exists())
++
++    def test_new_doctor_lands_on_dashboard(self):
++        self.assertRedirects(self._register('Doctor'), reverse('home:dashboard'))
+diff --git a/apps/profile/urls.py b/apps/profile/urls.py
+index 9dffb89..03df225 100644
+--- a/apps/profile/urls.py
++++ b/apps/profile/urls.py
+@@ -5,5 +5,6 @@ from .views import profile_view
+ app_name = 'profile'
+ urlpatterns = [
+     path('', profile_view, name='profile'),
++    path('start-pregnancy/', views.start_pregnancy, name='start_pregnancy'),
+     path('log-vitals/', views.add_health_log, name='add_health_log'),
+     ]
+\ No newline at end of file
+diff --git a/apps/profile/utils.py b/apps/profile/utils.py
+new file mode 100644
+index 0000000..892ea00
+--- /dev/null
++++ b/apps/profile/utils.py
+@@ -0,0 +1,41 @@
++from datetime import timedelta
++
++# A full-term pregnancy is counted as 40 weeks (280 days) from the first day
++# of the last menstrual period (LMP).
++FULL_TERM_DAYS = 280
++FULL_TERM_WEEKS = 40
++
++
++def calculate_edd(lmp_date):
++    """Estimated due date using Naegele's rule: LMP + 280 days."""
++    return lmp_date + timedelta(days=FULL_TERM_DAYS)
++
++
++def gestational_progress(lmp_date, today):
++    """
++    Summarise how far along a pregnancy is.
++
++    Returns a dict with:
++      weeks          - completed weeks of gestation
++      days           - extra days beyond the completed weeks (0-6)
++      trimester      - 1, 2 or 3
++      days_to_go     - days until the EDD (negative once past it)
++      percent        - progress toward 40 weeks, capped at 100
++    """
++    elapsed = max(0, (today - lmp_date).days)
++    weeks, days = divmod(elapsed, 7)
++
++    if weeks < 13:
++        trimester = 1
++    elif weeks < 28:
++        trimester = 2
++    else:
++        trimester = 3
++
++    return {
++        'weeks': weeks,
++        'days': days,
++        'trimester': trimester,
++        'days_to_go': (calculate_edd(lmp_date) - today).days,
++        'percent': min(100, round(elapsed / FULL_TERM_DAYS * 100)),
++    }
+diff --git a/apps/profile/views.py b/apps/profile/views.py
+index 2a2605b..e53f2a5 100644
+--- a/apps/profile/views.py
++++ b/apps/profile/views.py
+@@ -1,8 +1,10 @@
+ from django.shortcuts import render, redirect, get_object_or_404
+ from django.contrib.auth.decorators import login_required
+ from django.contrib import messages
++from django.db import transaction
+ from .models import MotherProfile, DoctorProfile, PregnancyProfile
+-from .forms import MaternalHealthLogForm
++from .forms import MaternalHealthLogForm, StartPregnancyForm
++from .utils import calculate_edd
+ from datetime import date
+ 
+ @login_required
+@@ -30,6 +32,45 @@ def profile_view(request):
+ 
+     return render(request, template, {'profile': profile})
+ 
++@login_required
++def start_pregnancy(request):
++    """Onboarding step: a mother enters her LMP and we create her PregnancyProfile."""
++    if request.user.role != 'Mother':
++        messages.warning(request, "Only mothers can start a pregnancy profile.")
++        return redirect('home:dashboard')
++
++    mother = get_object_or_404(MotherProfile, user=request.user)
++
++    if PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').exists():
++        messages.info(request, "You already have an active pregnancy profile.")
++        return redirect('home:dashboard')
++
++    if request.method == 'POST':
++        form = StartPregnancyForm(request.POST)
++        if form.is_valid():
++            lmp = form.cleaned_data['lmp_date']
++            edd = calculate_edd(lmp)
++
++            # Lock the mother row so a double-click can't create two ongoing pregnancies.
++            with transaction.atomic():
++                MotherProfile.objects.select_for_update().get(pk=mother.pk)
++                if PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').exists():
++                    return redirect('home:dashboard')
++                PregnancyProfile.objects.create(
++                    mother=mother,
++                    lmp_date=lmp,
++                    edd_date=edd,
++                    pregnancy_status='Ongoing',
++                )
++
++            messages.success(request, f"Your pregnancy journey has begun. Estimated due date: {edd:%B %d, %Y}.")
++            return redirect('home:dashboard')
++    else:
++        form = StartPregnancyForm()
++
++    return render(request, 'profile/start_pregnancy.html', {'form': form})
++
++
+ @login_required
+ def add_health_log(request):
+     mother = MotherProfile.objects.filter(user=request.user).first()
+diff --git a/apps/register/forms.py b/apps/register/forms.py
+index 41640e4..aeb5ecc 100644
+--- a/apps/register/forms.py
++++ b/apps/register/forms.py
+@@ -1,6 +1,12 @@
+ from django import forms
++from django.contrib.auth import get_user_model
+ from django.contrib.auth.forms import UserCreationForm
+-from django.contrib.auth.models import User
++
++# AUTH_USER_MODEL is profile.User, so django.contrib.auth.models.User is swapped
++# out and can't be used here.
++User = get_user_model()
++
++ROLE_CHOICES = [('Mother', 'Mother'), ('Doctor', 'Doctor')]
+ 
+ 
+ class RegisterForm(UserCreationForm):
+@@ -11,6 +17,9 @@ class RegisterForm(UserCreationForm):
+         fields = ['username', 'email']
+ 
+ class SignUpForm(UserCreationForm):
++    email = forms.EmailField(required=True)
++    role = forms.ChoiceField(label='I am a', choices=ROLE_CHOICES, initial='Mother')
++
+     class Meta:
+         model = User
+         fields = ("username", "email")
+\ No newline at end of file
+diff --git a/apps/register/views.py b/apps/register/views.py
+index 3220cc8..854754d 100644
+--- a/apps/register/views.py
++++ b/apps/register/views.py
+@@ -21,6 +21,9 @@ def register_view(request):
+                 DoctorProfile.objects.create(user=user)
+                 
+             login(request, user)
++            if role == 'Mother':
++                # New mothers go straight to the "Start Pregnancy" onboarding step.
++                return redirect('profile:start_pregnancy')
+             return redirect('home:dashboard')
+     else:
+         form = SignUpForm()
+diff --git a/templates/base.html b/templates/base.html
+index c07ca9c..defbf1b 100644
+--- a/templates/base.html
++++ b/templates/base.html
+@@ -182,5 +182,6 @@
+ 
+     <!-- Bootstrap JS -->
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
++    {% block scripts %}{% endblock %}
+ </body>
+ </html>
+\ No newline at end of file
+diff --git a/templates/home/mother_dashboard.html b/templates/home/mother_dashboard.html
+index 3600442..95cc146 100644
+--- a/templates/home/mother_dashboard.html
++++ b/templates/home/mother_dashboard.html
+@@ -8,21 +8,41 @@
+         <p class="lead text-muted">How are you feeling today?</p>
+     </div>
+     <div class="col-md-5 text-md-end">
+-        <a href="{% url 'profile:add_health_log' %}" class="btn btn-sage shadow-sm">+ Record Today's Vitals</a>
++        {% if pregnancy %}
++            <a href="{% url 'profile:add_health_log' %}" class="btn btn-sage shadow-sm">+ Record Today's Vitals</a>
++        {% endif %}
+     </div>
+ </div>
+ 
+ <div class="row g-4">
++{% if mother and not pregnancy %}
++    <!-- Empty state: no pregnancy profile yet -->
++    <div class="col-12">
++        <div class="card p-5 text-center border-0" style="background-color: #E9EDEA;">
++            <h2 class="mb-3">Start your pregnancy journey.</h2>
++            <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
++                Enter the first day of your last period and we'll estimate your due date,
++                track your weeks, and unlock vitals logging.
++            </p>
++            <div>
++                <a href="{% url 'profile:start_pregnancy' %}" class="btn btn-sage btn-lg shadow-sm">Set up my pregnancy</a>
++            </div>
++        </div>
++    </div>
++{% else %}
+     <!-- 1. Pregnancy Progress Card -->
+     <div class="col-md-4">
+         <div class="card p-4 h-100 border-0" style="background-color: #E9EDEA;">
+             <h5 class="small fw-bold text-uppercase opacity-50 mb-4">Pregnancy Progress</h5>
+             <div class="text-center py-3">
+                 <h2 class="display-1 fw-bold" style="color: var(--sage-dark);">{{ weeks }}</h2>
+-                <p class="fw-bold">Weeks</p>
++                <p class="fw-bold mb-1">Weeks{% if days_into_week %} + {{ days_into_week }} day{{ days_into_week|pluralize }}{% endif %}</p>
++                {% if pregnancy %}
++                    <p class="small text-muted mb-0">Trimester {{ trimester }} · Due {{ pregnancy.edd_date|date:"M j, Y" }}</p>
++                {% endif %}
+             </div>
+             <div class="progress bg-white mt-3" style="height: 8px; border-radius: 10px;">
+-                <div class="progress-bar" style="background-color: var(--sage-green); width: {% widthratio weeks 40 100 %}%"></div>
++                <div class="progress-bar" style="background-color: var(--sage-green); width: {{ progress_percent }}%"></div>
+             </div>
+             <div class="d-flex justify-content-between mt-2 small opacity-50">
+                 <span>Start</span>
+@@ -57,6 +77,7 @@
+             </div>
+         </div>
+     </div>
++{% endif %}
+ </div>
+ 
+ <!-- 3. Upcoming Appointments Section (Integrated from Number 3) -->
+@@ -76,7 +97,7 @@
+                                 <p class="mb-0 fw-bold text-dark">{{ appt.scheduled_datetime|date:"h:i A" }}</p>
+                                 <p class="mb-0 small text-muted">{{ appt.reason|truncatechars:35 }}</p>
+                             </div>
+-                        </div>w
++                        </div>
+                     </div>
+                 {% empty %}
+                     <div class="col-12 text-center py-3">
+diff --git a/templates/profile/start_pregnancy.html b/templates/profile/start_pregnancy.html
+new file mode 100644
+index 0000000..162f8d3
+--- /dev/null
++++ b/templates/profile/start_pregnancy.html
+@@ -0,0 +1,78 @@
++{% extends 'base.html' %}
++
++{% block content %}
++<div class="row justify-content-center py-5">
++    <div class="col-md-6">
++        <div class="card p-5 border-0 shadow-sm">
++            <div class="text-center mb-5">
++                <h2 class="display-6">Let's begin your journey.</h2>
++                <p class="text-muted">Tell us when your last period started and we'll estimate your due date and start tracking your progress.</p>
++            </div>
++
++            <form method="POST" novalidate>
++                {% csrf_token %}
++
++                <label for="{{ form.lmp_date.id_for_label }}" class="small fw-bold text-uppercase opacity-50 mb-2">
++                    {{ form.lmp_date.label }}
++                </label>
++                {{ form.lmp_date }}
++                {% for error in form.lmp_date.errors %}
++                    <div class="small text-danger mt-2">{{ error }}</div>
++                {% endfor %}
++
++                <!-- Live preview, filled in by the script below -->
++                <div id="edd-preview" class="mt-4 p-3 text-center rounded-4 d-none" style="background-color: #E9EDEA;">
++                    <p class="small text-uppercase fw-bold opacity-50 mb-1">Estimated due date</p>
++                    <h3 class="fw-bold mb-1" id="edd-value" style="color: var(--sage-dark);"></h3>
++                    <p class="small text-muted mb-0" id="edd-weeks"></p>
++                </div>
++
++                <p class="small text-muted mt-4 mb-0">
++                    This is an estimate based on a 280-day pregnancy. Your doctor may adjust it after an ultrasound.
++                </p>
++
++                <div class="d-grid gap-3 mt-5">
++                    <button type="submit" class="btn btn-sage btn-lg shadow-sm">Start Tracking</button>
++                    <a href="{% url 'home:dashboard' %}" class="btn btn-link text-muted text-decoration-none small text-center">I'll do this later</a>
++                </div>
++            </form>
++        </div>
++    </div>
++</div>
++{% endblock %}
++
++{% block scripts %}
++<script>
++(function () {
++    var input = document.getElementById('id_lmp_date');
++    var box = document.getElementById('edd-preview');
++    var eddEl = document.getElementById('edd-value');
++    var weeksEl = document.getElementById('edd-weeks');
++    var DAY = 86400000;
++
++    function update() {
++        var parts = input.value.split('-');
++        if (parts.length !== 3) { box.classList.add('d-none'); return; }
++
++        // Work in UTC so daylight-saving shifts can't skew the day count.
++        var lmp = Date.UTC(+parts[0], +parts[1] - 1, +parts[2]);
++        var now = new Date();
++        var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
++        var elapsed = Math.round((today - lmp) / DAY);
++
++        if (isNaN(elapsed) || elapsed < 0 || elapsed > 294) { box.classList.add('d-none'); return; }
++
++        var edd = new Date(lmp + 280 * DAY);
++        eddEl.textContent = edd.toLocaleDateString('en-US', {
++            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
++        });
++        var w = Math.floor(elapsed / 7), d = elapsed % 7;
++        weeksEl.textContent = "You're currently " + w + ' weeks' + (d ? ' and ' + d + (d === 1 ? ' day' : ' days') : '') + ' along.';
++        box.classList.remove('d-none');
++    }
++
++    input.addEventListener('input', update);
++    update();
++})();
++</script>
++{% endblock %}
+diff --git a/templates/register/register.html b/templates/register/register.html
+index 40c25f1..0c2067a 100644
+--- a/templates/register/register.html
++++ b/templates/register/register.html
+@@ -18,11 +18,19 @@
+                             {{ field.label }}
+                         </label>
+                         
++                        {% if field.name == 'role' %}
++                        <select name="role" class="form-select {% if field.errors %}is-invalid{% endif %}">
++                            {% for value, label in field.field.choices %}
++                                <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>
++                            {% endfor %}
++                        </select>
++                        {% else %}
+                         <!-- Manually adding form-control class to Django fields -->
+-                        <input type="{{ field.field.widget.input_type|default:'text' }}" 
+-                               name="{{ field.name }}" 
++                        <input type="{{ field.field.widget.input_type|default:'text' }}"
++                               name="{{ field.name }}"
+                                class="form-control {% if field.errors %}is-invalid{% endif %}"
+                                placeholder="{{ field.label }}">
++                        {% endif %}
+                         
+                         <!-- Clean handling of help text -->
+                         {% if field.help_text %}
