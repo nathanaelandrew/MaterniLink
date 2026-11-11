@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar · MaterniLink{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Schedule</span>
+        <h1 class="page-title">{{ month_label }}</h1>
+        <p class="page-lead">Confirmed visits plotted by day. Pending requests appear here once accepted.</p>
+    </div>
+
+    <div class="cal-nav">
+        <a class="icon-btn" href="?month={{ prev_month }}" aria-label="Previous month"><svg class="icon"><use href="#i-chevron-left"/></svg></a>
+        <a class="button button--ghost" href="{% url 'home:doctor_calendar' %}" {% if is_current %}aria-current="date"{% endif %}>Today</a>
+        <a class="icon-btn" href="?month={{ next_month }}" aria-label="Next month"><svg class="icon"><use href="#i-chevron-right"/></svg></a>
+    </div>
+</header>
+
+<!-- Month grid (desktop) -->
+<section class="cal" data-reveal style="--d: 80ms">
+    <div class="cal__dow">
+        {% for d in weekdays %}<span>{{ d }}</span>{% endfor %}
+    </div>
+    {% for week in grid %}
+        <div class="cal__week">
+            {% for cell in week %}
+                <div class="cal__cell {% if not cell.in_month %}is-out{% endif %} {% if cell.is_today %}is-today{% endif %}">
+                    <span class="cal__day">{{ cell.date.day }}</span>
+                    {% for a in cell.appts|slice:":3" %}
+                        <a class="cal__chip {% if a.status == 'Rescheduled' %}cal__chip--moved{% endif %}"
+                           href="{% url 'home:doctor_patient_detail' a.mother.pk %}"
+                           title="{{ a.mother.first_name }} {{ a.mother.last_name }} · {{ a.reason }}">
+                            {{ a.scheduled_datetime|time:"h:i A" }} {{ a.mother.last_name|default:a.mother.first_name }}
+                        </a>
+                    {% endfor %}
+                    {% if cell.appts|length > 3 %}
+                        <span class="cal__more">+{{ cell.appts|length|add:"-3" }} more</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</section>
+
+<!-- Agenda list (always shown; the grid is hidden on phones) -->
+<section class="panel mt-4" data-reveal style="--d: 120ms">
+    <div class="panel__head">
+        <div>
+            <h3 class="panel__title">Agenda</h3>
+            <p class="panel__sub">Every visit in {{ month_label }}.</p>
+        </div>
+    </div>
+
+    {% for day in agenda %}
+        <div class="agenda-day">
+            <div class="agenda-day__label">{{ day.date|date:"l, F j" }}</div>
+            {% for a in day.appts %}
+                <div class="sched-item">
+                    <div class="sched-time">
+                        {{ a.scheduled_datetime|time:"h:i" }}<small>{{ a.scheduled_datetime|time:"A" }}</small>
+                    </div>
+                    <div>
+                        <div class="sched-name">
+                            <a href="{% url 'home:doctor_patient_detail' a.mother.pk %}">{{ a.mother.first_name }} {{ a.mother.last_name }}</a>
+                        </div>
+                        <div class="muted-sm">{{ a.reason|truncatechars:70 }}</div>
+                    </div>
+                    {% if a.status == 'Rescheduled' %}
+                        <span class="pill pill--dot pill--info">Rescheduled</span>
+                    {% else %}
+                        <span class="pill pill--dot pill--ok">Accepted</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% empty %}
+        <div class="empty">
+            <div class="empty__icon"><svg class="icon"><use href="#i-calendar"/></svg></div>
+            <h4>No visits this month</h4>
+            <p>Accepted appointments will be plotted here.</p>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

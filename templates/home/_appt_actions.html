@@ -1,0 +1,36 @@
+{% comment %}
+    Accept / decline / reschedule controls for one appointment.
+    Expects: appt, tab, return_to, today.  Optional: compact (accept/decline only).
+{% endcomment %}
+<div class="appt-actions">
+    {% if appt.status == 'Pending' %}
+        <form method="post" action="{% url 'home:appointment_respond' appt.pk %}" class="appt-actions__form">
+            {% csrf_token %}
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <button type="submit" name="action" value="accept" class="button button--sm">
+                <svg class="icon"><use href="#i-check"/></svg>Accept
+            </button>
+            <button type="submit" name="action" value="decline" class="button button--sm button--ghost">
+                <svg class="icon"><use href="#i-x"/></svg>Decline
+            </button>
+        </form>
+    {% endif %}
+
+    {% if not compact and appt.status != 'Declined' %}
+        <details class="resched">
+            <summary class="button button--sm button--soft">
+                <svg class="icon"><use href="#i-clock-arrow"/></svg>Reschedule
+            </summary>
+            <form method="post" action="{% url 'home:appointment_respond' appt.pk %}" class="resched__form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reschedule">
+                <input type="hidden" name="return_to" value="{{ return_to }}">
+                <input type="hidden" name="tab" value="{{ tab }}">
+                <input type="date" name="date" class="form-control" min="{{ today }}" value="{{ appt.scheduled_datetime|date:'Y-m-d' }}" required aria-label="New date">
+                <input type="time" name="time" class="form-control" value="{{ appt.scheduled_datetime|time:'H:i' }}" required aria-label="New time">
+                <button type="submit" class="button button--sm">Move visit</button>
+            </form>
+        </details>
+    {% endif %}
+</div>

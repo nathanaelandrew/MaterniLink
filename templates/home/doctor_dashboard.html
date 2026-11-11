@@ -1,64 +1,156 @@
 {% extends 'base.html' %}
-{% block title %}Doctor Dashboard - MaterniLink{% endblock %}
+
+{% block title %}Dashboard · MaterniLink{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h2 class="fw-bold">Welcome, Dr. {{ doctor.last_name }}</h2>
-        <hr>
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">{% now "l, F j" %}</span>
+        <h1 class="page-title">
+            Good day, {% if doctor.last_name == 'Doctor' %}{{ doctor.first_name }}{% else %}Dr. {{ doctor.last_name }}{% endif %}.
+        </h1>
+        <p class="page-lead">Here is what needs your attention today.</p>
     </div>
-</div>
+    <a href="{% url 'home:doctor_calendar' %}" class="button button--ghost">
+        <svg class="icon"><use href="#i-calendar-days"/></svg>Open calendar
+    </a>
+</header>
 
-<div class="row text-center mb-4">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white border-0 shadow-sm p-3">
-            <h3>{{ patient_count }}</h3>
-            <p class="mb-0">Active Patients</p>
+<!-- Key numbers -->
+<section class="stats-3" data-stagger="80">
+    <a href="{% url 'home:doctor_patients' %}" class="panel stat stat-link" data-reveal>
+        <span class="stat__icon"><svg class="icon"><use href="#i-users"/></svg></span>
+        <div>
+            <span class="label-caps">Active patients</span>
+            <p class="stat__value"><span data-count="{{ patient_count }}">{{ patient_count }}</span></p>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-warning text-dark border-0 shadow-sm p-3">
-            <h3>{{ pending_count }}</h3>
-            <p class="mb-0">Pending Requests</p>
+    </a>
+    <a href="{% url 'home:doctor_requests' %}" class="panel stat stat-link" data-reveal>
+        <span class="stat__icon stat__icon--clay"><svg class="icon"><use href="#i-inbox"/></svg></span>
+        <div>
+            <span class="label-caps">Pending requests</span>
+            <p class="stat__value"><span data-count="{{ pending_count }}">{{ pending_count }}</span></p>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-info text-white border-0 shadow-sm p-3">
-            <h3>{{ appointments.count }}</h3>
-            <p class="mb-0">Appointments Today</p>
+    </a>
+    <a href="{% url 'home:doctor_calendar' %}" class="panel stat stat-link" data-reveal>
+        <span class="stat__icon"><svg class="icon"><use href="#i-calendar-days"/></svg></span>
+        <div>
+            <span class="label-caps">Visits today</span>
+            <p class="stat__value"><span data-count="{{ today_count }}">{{ today_count }}</span></p>
         </div>
-    </div>
-</div>
+    </a>
+</section>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body">
-        <h5 class="fw-bold mb-4">Today's Schedule</h5>
-        <table class="table table-hover">
-            <thead class="table-light">
-                <tr>
-                    <th>Time</th>
-                    <th>Patient Name</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for appt in appointments %}
-                <tr>
-                    <td>{{ appt.scheduled_datetime|date:"H:i" }}</td>
-                    <td>{{ appt.mother.first_name }} {{ appt.mother.last_name }}</td>
-                    <td>{{ appt.reason }}</td>
-                    <td><span class="badge bg-primary">{{ appt.status }}</span></td>
-                    <td><a href="#" class="btn btn-sm btn-outline-primary">View Chart</a></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-4">No appointments scheduled for today.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="dash-2">
+    <!-- Today's schedule -->
+    <section class="panel" data-reveal style="--d: 120ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Today's schedule</h3>
+                <p class="panel__sub">Confirmed visits for today.</p>
+            </div>
+        </div>
+
+        {% for appt in todays %}
+            <div class="sched-item">
+                <div class="sched-time">
+                    {{ appt.scheduled_datetime|time:"h:i" }}<small>{{ appt.scheduled_datetime|time:"A" }}</small>
+                </div>
+                <div>
+                    <div class="sched-name">
+                        <a href="{% url 'home:doctor_patient_detail' appt.mother.pk %}">{{ appt.mother.first_name }} {{ appt.mother.last_name }}</a>
+                    </div>
+                    <div class="muted-sm">{{ appt.reason|truncatechars:70 }}</div>
+                </div>
+                {% if appt.status == 'Rescheduled' %}
+                    <span class="pill pill--dot pill--info">Rescheduled</span>
+                {% else %}
+                    <span class="pill pill--dot pill--ok">Accepted</span>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-calendar"/></svg></div>
+                <h4>A clear day</h4>
+                <p>No confirmed visits are scheduled for today.</p>
+            </div>
+        {% endfor %}
+    </section>
+
+    <!-- Pending requests -->
+    <section class="panel" data-reveal style="--d: 200ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">New requests</h3>
+                <p class="panel__sub">Waiting for your response.</p>
+            </div>
+            {% if pending_count %}
+                <a href="{% url 'home:doctor_requests' %}" class="link-arrow">All {{ pending_count }}<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+            {% endif %}
+        </div>
+
+        {% for appt in pending_preview %}
+            <div class="req-mini">
+                <div class="req-mini__top">
+                    <div class="date-chip">
+                        <span>{{ appt.scheduled_datetime|date:"M" }}</span>
+                        <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
+                    </div>
+                    <div style="min-width:0">
+                        <div class="sched-name">
+                            <a href="{% url 'home:doctor_patient_detail' appt.mother.pk %}">{{ appt.mother.first_name }} {{ appt.mother.last_name }}</a>
+                        </div>
+                        <div class="muted-sm">{{ appt.scheduled_datetime|time:"h:i A" }} &middot; {{ appt.reason|truncatechars:38 }}</div>
+                    </div>
+                </div>
+                {% include 'home/_appt_actions.html' with appt=appt return_to='dashboard' tab='pending' compact=True %}
+            </div>
+        {% empty %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-check"/></svg></div>
+                <h4>All caught up</h4>
+                <p>New appointment requests will appear here.</p>
+            </div>
+        {% endfor %}
+    </section>
+
+    <!-- Coming up -->
+    <section class="panel dash-2__wide" data-reveal style="--d: 150ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Coming up</h3>
+                <p class="panel__sub">Your next confirmed visits.</p>
+            </div>
+            <a href="{% url 'home:doctor_requests' %}?tab=upcoming" class="link-arrow">
+                View all<svg class="icon"><use href="#i-arrow-right"/></svg>
+            </a>
+        </div>
+
+        <div class="appt-grid">
+            {% for appt in upcoming %}
+                <article class="appt-mini">
+                    <div class="date-chip">
+                        <span>{{ appt.scheduled_datetime|date:"M" }}</span>
+                        <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
+                    </div>
+                    <div class="appt-mini__body">
+                        <div class="appt-mini__top">
+                            <span class="appt-mini__time">{{ appt.scheduled_datetime|time:"h:i A" }}</span>
+                            {% if appt.status == 'Rescheduled' %}
+                                <span class="pill pill--dot pill--info">Rescheduled</span>
+                            {% else %}
+                                <span class="pill pill--dot pill--ok">Accepted</span>
+                            {% endif %}
+                        </div>
+                        <p class="appt-mini__reason">{{ appt.mother.first_name }} {{ appt.mother.last_name }} &middot; {{ appt.reason }}</p>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty" style="grid-column: 1 / -1;">
+                    <p class="mb-0">Nothing scheduled yet. Accepted requests will show up here.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 {% endblock %}

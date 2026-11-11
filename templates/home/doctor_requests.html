@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Requests · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Appointments</span>
+        <h1 class="page-title">Requests</h1>
+        <p class="page-lead">Accept, decline or move visits requested by your patients.</p>
+    </div>
+</header>
+
+<nav class="seg" aria-label="Request filters" data-reveal style="--d: 80ms">
+    <a href="?tab=pending" class="{% if tab == 'pending' %}is-active{% endif %}">
+        Pending <span class="seg__count">{{ counts.pending }}</span>
+    </a>
+    <a href="?tab=upcoming" class="{% if tab == 'upcoming' %}is-active{% endif %}">
+        Upcoming <span class="seg__count">{{ counts.upcoming }}</span>
+    </a>
+    <a href="?tab=history" class="{% if tab == 'history' %}is-active{% endif %}">
+        History <span class="seg__count">{{ counts.history }}</span>
+    </a>
+</nav>
+
+<div class="appt-feed appt-feed--tall" data-stagger="60" style="margin-top: 1.25rem">
+    {% for appt in appointments %}
+        <article class="appt {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}appt--ok{% elif appt.status == 'Declined' %}appt--bad{% elif appt.status == 'Rescheduled' %}appt--info{% endif %}" data-reveal>
+            <div class="date-chip">
+                <span>{{ appt.scheduled_datetime|date:"M" }}</span>
+                <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
+            </div>
+
+            <div>
+                <h4>
+                    <a class="plain-link" href="{% url 'home:doctor_patient_detail' appt.mother.pk %}">{{ appt.mother.first_name }} {{ appt.mother.last_name }}</a>
+                </h4>
+                <span class="appt__when">{{ appt.scheduled_datetime|time:"h:i A" }} &middot; {{ appt.scheduled_datetime|date:"l, M j" }}</span>
+            </div>
+
+            {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}
+                <span class="pill pill--dot pill--ok">Accepted</span>
+            {% elif appt.status == 'Declined' %}
+                <span class="pill pill--dot pill--bad">Declined</span>
+            {% elif appt.status == 'Rescheduled' %}
+                <span class="pill pill--dot pill--info">Rescheduled</span>
+            {% else %}
+                <span class="pill pill--dot pill--pending">Pending</span>
+            {% endif %}
+
+            <p class="appt__reason"><b>Reason:</b> {{ appt.reason }}</p>
+
+            {% if tab != 'history' %}
+                {% include 'home/_appt_actions.html' with appt=appt return_to='' tab=tab %}
+            {% endif %}
+        </article>
+    {% empty %}
+        <div class="panel">
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-inbox"/></svg></div>
+                {% if tab == 'pending' %}
+                    <h4>No pending requests</h4>
+                    <p>You're all caught up. New requests from patients will appear here.</p>
+                {% elif tab == 'upcoming' %}
+                    <h4>Nothing coming up</h4>
+                    <p>Accepted and rescheduled visits will be listed here.</p>
+                {% else %}
+                    <h4>No history yet</h4>
+                    <p>Past and declined visits will be listed here.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

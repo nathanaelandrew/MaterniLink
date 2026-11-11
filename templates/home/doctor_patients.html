@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Patients · MaterniLink{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Patient index</span>
+        <h1 class="page-title">Patients</h1>
+        <p class="page-lead">Everyone under your care, with their current pregnancy at a glance.</p>
+    </div>
+
+    <form method="get" class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Search by name" aria-label="Search patients">
+    </form>
+</header>
+
+<div class="patient-grid" data-stagger="60">
+    {% for row in rows %}
+        <a class="panel patient" href="{% url 'home:doctor_patient_detail' row.mother.pk %}" data-reveal>
+            <div class="patient__top">
+                <span class="avatar">{{ row.mother.first_name|first|upper }}</span>
+                <div style="min-width:0">
+                    <p class="patient__name">{{ row.mother.first_name }} {{ row.mother.last_name }}</p>
+                    <span class="patient__meta">
+                        {% if row.age is not None %}{{ row.age }} years old{% endif %}
+                        {% if row.mother.blood_type %}&middot; {{ row.mother.blood_type }}{% endif %}
+                    </span>
+                </div>
+                <svg class="icon patient__go"><use href="#i-chevron-right"/></svg>
+            </div>
+
+            <div class="patient__facts">
+                <div class="fact">
+                    <span>Pregnancy</span>
+                    {% if row.pregnancy %}
+                        <strong>{{ row.weeks }} weeks</strong>
+                    {% else %}
+                        <strong class="muted-sm">Not started</strong>
+                    {% endif %}
+                </div>
+                <div class="fact">
+                    <span>Next visit</span>
+                    {% if row.next_visit %}
+                        <strong>{{ row.next_visit|date:"M j" }}</strong>
+                    {% else %}
+                        <strong class="muted-sm">None booked</strong>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if row.trimester %}
+                <span class="pill pill--ok" style="align-self:flex-start">Trimester {{ row.trimester }}</span>
+            {% endif %}
+        </a>
+    {% empty %}
+        <div class="panel" style="grid-column: 1 / -1;">
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-users"/></svg></div>
+                {% if q %}
+                    <h4>No patients match "{{ q }}"</h4>
+                    <p>Try a different name, or clear the search.</p>
+                    <a href="{% url 'home:doctor_patients' %}" class="link-arrow">Clear search</a>
+                {% else %}
+                    <h4>No patients yet</h4>
+                    <p>Patients appear here once they book a visit with you or are assigned to you.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
