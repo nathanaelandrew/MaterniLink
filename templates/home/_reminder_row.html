@@ -1,0 +1,29 @@
+{% comment %}One reminder. Expects: r, return_to. Optional: compact (hides delete).{% endcomment %}
+<div class="rem {% if r.done %}is-done{% elif r.is_due %}is-due{% endif %}">
+    <form method="post" action="{% url 'home:reminder_toggle' r.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <button type="submit" class="rem__check" aria-label="{% if r.done %}Mark {{ r.title }} as not done{% else %}Mark {{ r.title }} as done{% endif %}" aria-pressed="{% if r.done %}true{% else %}false{% endif %}">
+            <svg class="icon"><use href="#i-check"/></svg>
+        </button>
+    </form>
+
+    <div class="rem__body">
+        <span class="rem__title">{{ r.title }}</span>
+        <span class="rem__meta">
+            <span class="rem__cat rem__cat--{{ r.reminder_type|slugify }}">{{ r.reminder_type }}</span>
+            {{ r.scheduled_time|time:"g:i A" }}
+            {% if r.is_due %}<span class="pill pill--pending">Due</span>{% endif %}
+        </span>
+    </div>
+
+    {% if not compact %}
+        <form method="post" action="{% url 'home:reminder_delete' r.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <button type="submit" class="icon-btn icon-btn--sm" aria-label="Delete {{ r.title }}">
+                <svg class="icon"><use href="#i-trash"/></svg>
+            </button>
+        </form>
+    {% endif %}
+</div>

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Trends · MaterniLink{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Your pregnancy</span>
+        <h1 class="page-title">Health trends</h1>
+        <p class="page-lead">Your weight, blood pressure and baby's movements over time, drawn from what you have logged.</p>
+    </div>
+    <a href="{% url 'profile:add_health_log' %}" class="button">
+        <svg class="icon"><use href="#i-plus"/></svg>Record vitals
+    </a>
+</header>
+
+{% if has_logs or has_sessions %}
+<section class="stats-3 stats-3--rows" data-stagger="80">
+    <div class="panel stat" data-reveal>
+        <span class="stat__icon"><svg class="icon"><use href="#i-weight"/></svg></span>
+        <div>
+            <span class="label-caps">Weight</span>
+            <p class="stat__value">{% if has_logs %}{{ weight_latest|floatformat:1 }}<small>kg{% if weight_change %} &middot; {{ weight_change }} kg{% endif %}</small>{% else %}--{% endif %}</p>
+        </div>
+    </div>
+    <div class="panel stat" data-reveal>
+        <span class="stat__icon stat__icon--clay"><svg class="icon"><use href="#i-drop"/></svg></span>
+        <div>
+            <span class="label-caps">Blood pressure</span>
+            <p class="stat__value">{% if has_logs %}{{ bp_latest }}<small>mmHg</small>{% else %}--{% endif %}</p>
+        </div>
+    </div>
+    <div class="panel stat" data-reveal>
+        <span class="stat__icon"><svg class="icon"><use href="#i-motion"/></svg></span>
+        <div>
+            <span class="label-caps">Avg. movements</span>
+            <p class="stat__value">{% if has_sessions %}{{ kick_avg }}<small>per session</small>{% else %}--{% endif %}</p>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<div class="trend-grid">
+    <!-- Weight -->
+    <section class="panel" data-reveal style="--d: 100ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Weight</h3>
+                <p class="panel__sub">Kilograms, from your latest readings.</p>
+            </div>
+        </div>
+        {% if has_logs %}
+            {% include 'home/_line_chart.html' with chart=weight_chart label="Line chart of your weight in kilograms over time" %}
+            <p class="chart-note">Healthy weight gain differs from person to person. Your doctor can tell you what range suits you.</p>
+        {% else %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-weight"/></svg></div>
+                <h4>No weight recorded yet</h4>
+                <p>Record your vitals and your weight chart will appear here.</p>
+                <a href="{% url 'profile:add_health_log' %}" class="link-arrow">Record vitals<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Blood pressure -->
+    <section class="panel" data-reveal style="--d: 160ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Blood pressure</h3>
+                <p class="panel__sub">mmHg. Dashed lines mark 140 (systolic) and 90 (diastolic).</p>
+            </div>
+            {% if has_logs %}
+                <div class="legend">
+                    <span><i class="legend__dot legend__dot--sage"></i>Systolic</span>
+                    <span><i class="legend__dot legend__dot--clay"></i>Diastolic</span>
+                </div>
+            {% endif %}
+        </div>
+        {% if has_logs %}
+            {% include 'home/_line_chart.html' with chart=bp_chart label="Line chart of your systolic and diastolic blood pressure over time" %}
+
+            <div class="callout callout--{{ bp_level }}">
+                <svg class="icon"><use href="#{% if bp_level == 'ok' %}i-check{% else %}i-info{% endif %}"/></svg>
+                <div>
+                    <strong>Latest reading: {{ bp_label }}</strong>
+                    <p>{{ bp_advice }}</p>
+                </div>
+            </div>
+            {% if flagged_count %}
+                <p class="chart-note">{{ flagged_count }} of your last {{ log_count }} reading{{ log_count|pluralize }} fell outside the usual range (circled in the chart).</p>
+            {% endif %}
+        {% else %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-drop"/></svg></div>
+                <h4>No readings yet</h4>
+                <p>Log your blood pressure to see how it changes through your pregnancy.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Kicks -->
+    <section class="panel trend-grid__wide" data-reveal style="--d: 200ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Baby's movements</h3>
+                <p class="panel__sub">Movements counted in each kick counter session.</p>
+            </div>
+            {% if has_sessions %}
+                <span class="pill pill--ok">{{ kick_goal_met }} of {{ kick_sessions }} reached {{ kick_goal }}</span>
+            {% endif %}
+        </div>
+        {% if has_sessions %}
+            {% include 'home/_bar_chart.html' with chart=kick_chart label="Bar chart of baby movements counted in each session" %}
+        {% else %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-motion"/></svg></div>
+                <h4>No kick sessions yet</h4>
+                <p>Start a session and each one will show up here as a bar.</p>
+                <a href="{% url 'home:kick_counter' %}" class="link-arrow">Open kick counter<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<p class="disclaimer">
+    These charts are for your information and do not replace professional medical advice.
+    If something feels wrong, or you notice fewer baby movements than usual, contact your care team or emergency services.
+</p>
+{% endblock %}

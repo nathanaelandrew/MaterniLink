@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from datetime import date
+from datetime import date, datetime
+from django.utils import timezone
 
 # 1. All necessary models from the ERD
 from .models import (
@@ -19,13 +20,21 @@ from .forms import MaternalHealthLogForm, AppointmentRequestForm
 @login_required
 def profile_view(request):
     user = request.user
-    
+
     if user.role == 'Doctor':
         profile = get_object_or_404(DoctorProfile, user=user)
-        template = 'profile/doctor_profile.html'
+        # (field, label, input type, required)
+        fields = [
+            ('first_name', 'First name', 'text', True),
+            ('last_name', 'Last name', 'text', True),
+            ('specialization', 'Specialization', 'text', True),
+            ('phone_number', 'Phone number', 'tel', True),
+            ('clinic_address', 'Clinic address', 'textarea', True),
+        ]
+        readonly = [('License number', profile.license_number)]
     else:
         profile, _ = MotherProfile.objects.get_or_create(
-            user=user, 
+            user=user,
             defaults={
                 'first_name': user.username,
                 'last_name': 'User',
@@ -35,17 +44,48 @@ def profile_view(request):
                 'emergency_contact_phone': '000-000-0000',
             }
         )
-        template = 'profile/mother_profile.html'
+        fields = [
+            ('first_name', 'First name', 'text', True),
+            ('last_name', 'Last name', 'text', True),
+            ('date_of_birth', 'Date of birth', 'date', True),
+            ('blood_type', 'Blood type', 'text', True),
+            ('emergency_contact_name', 'Emergency contact name', 'text', True),
+            ('emergency_contact_phone', 'Emergency contact phone', 'tel', True),
+        ]
+        readonly = []
 
+    errors = {}
     if request.method == 'POST':
-        profile.first_name = request.POST.get('first_name', '').strip()
-        profile.last_name = request.POST.get('last_name', '').strip()
-        profile.save()
-        messages.success(request, 'Profile updated successfully.')
-        return redirect('profile:profile')
+        values = {n: request.POST.get(n, '').strip() for n, *_ in fields}
+        for name, label, kind, required in fields:
+            if required and not values[name]:
+                errors[name] = f"{label} is required."
+        if 'date_of_birth' in values and 'date_of_birth' not in errors:
+            try:
+                dob = datetime.strptime(values['date_of_birth'], '%Y-%m-%d').date()
+                if dob >= timezone.localdate():
+                    errors['date_of_birth'] = "Date of birth must be in the past."
+            except ValueError:
+                errors['date_of_birth'] = "Enter a valid date."
+        if not errors:
+            for name, val in values.items():
+                setattr(profile, name, val)
+            profile.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile:profile')
+    else:
+        values = {n: getattr(profile, n) for n, *_ in fields}
 
-    return render(request, template, {'profile': profile})
+    rows = [{
+        'name': n, 'label': l, 'kind': k,
+        'value': values[n].isoformat() if hasattr(values[n], 'isoformat') else values[n],
+        'error': errors.get(n),
+    } for n, l, k, _ in fields]
 
+    return render(request, 'profile/profile.html', {
+        'profile': profile, 'rows': rows, 'readonly': readonly,
+        'is_doctor': user.role == 'Doctor',
+    })
 
 @login_required
 def add_health_log(request):

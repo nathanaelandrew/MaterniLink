@@ -1,47 +1,55 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Profile - MaterniLink{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/profile/profile.css' %}">
-{% endblock %}
+{% block title %}Profile · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
 
 {% block content %}
-<div class="feature-wrapper">
-    <header class="feature-header">
-        <span class="feature-brand">MaterniLink</span>
-        <nav class="feature-nav">
-            <a href="{% url 'home:home' %}">Home</a>
-            <a href="{% url 'user_settings:settings' %}">Settings</a>
-        </nav>
-    </header>
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">{% if is_doctor %}Care provider{% else %}Your details{% endif %}</span>
+        <h1 class="page-title">Profile</h1>
+        <p class="page-lead">
+            {% if is_doctor %}Patients see this name on their appointments.{% else %}Keep your details current so your care team can reach you.{% endif %}
+        </p>
+    </div>
+    <a href="{% url 'home:dashboard' %}" class="button button--ghost">
+        <svg class="icon"><use href="#i-arrow-left"/></svg>Dashboard
+    </a>
+</header>
 
-    <main class="feature-main">
-        <div class="feature-card">
-            <h1>Your profile</h1>
-
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="message">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post">
-                {% csrf_token %}
-                <label for="full_name">Full name</label>
-                <input type="text" id="full_name" name="full_name" value="{{ profile.full_name }}">
-
-                <label for="bio">Bio</label>
-                <textarea id="bio" name="bio" rows="4">{{ profile.bio }}</textarea>
-
-                <button type="submit" class="btn-primary">Save profile</button>
-            </form>
+<section class="panel" data-reveal style="--d: 80ms">
+    <div class="panel__head">
+        <div>
+            <h3 class="panel__title">{{ profile.first_name }} {{ profile.last_name }}</h3>
+            <p class="panel__sub">{{ user.email }}</p>
         </div>
-    </main>
-</div>
-{% endblock %}
+        <span class="avatar avatar--lg">{{ profile.first_name|first|upper }}</span>
+    </div>
 
-{% block extra_js %}
-<script src="{% static 'js/profile/profile.js' %}"></script>
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for r in rows %}
+            <div class="field {% if r.error %}has-error{% endif %}">
+                <label class="field__label" for="id_{{ r.name }}">{{ r.label }}</label>
+                {% if r.kind == 'textarea' %}
+                    <textarea id="id_{{ r.name }}" name="{{ r.name }}" rows="3" class="form-control">{{ r.value }}</textarea>
+                {% else %}
+                    <input id="id_{{ r.name }}" name="{{ r.name }}" type="{{ r.kind }}" class="form-control"
+                           value="{{ r.value }}">
+                {% endif %}
+                {% if r.error %}<div class="field__error">{{ r.error }}</div>{% endif %}
+            </div>
+        {% endfor %}
+
+        {% for label, value in readonly %}
+            <div class="field">
+                <span class="field__label">{{ label }}</span>
+                <div class="form-control" style="background:var(--surface-soft);color:var(--ink-soft)">{{ value }}</div>
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="button button--lg mt-2">Save changes</button>
+    </form>
+</section>
 {% endblock %}

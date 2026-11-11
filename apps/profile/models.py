@@ -163,3 +163,4 @@ class Reminder(models.Model):
     scheduled_time = models.TimeField()
     frequency = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
+    last_done = models.DateField(null=True, blank=True)

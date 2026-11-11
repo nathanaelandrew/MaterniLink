@@ -1,0 +1,23 @@
+{% comment %}Expects: chart, label.{% endcomment %}
+<div class="chart" role="img" aria-label="{{ label }}">
+    <svg viewBox="0 0 {{ chart.w }} {{ chart.h }}" class="chart__svg" focusable="false">
+        {% for t in chart.yticks %}
+            <line class="chart__grid" x1="{{ chart.pl }}" x2="{{ chart.pr }}" y1="{{ t.y }}" y2="{{ t.y }}"/>
+            <text class="chart__tick" x="{{ chart.tick_x }}" y="{{ t.y }}" text-anchor="end" dominant-baseline="middle">{{ t.text }}</text>
+        {% endfor %}
+        {% for x in chart.xlabels %}
+            <text class="chart__tick" x="{{ x.x }}" y="{{ chart.label_y }}" text-anchor="middle">{{ x.text }}</text>
+        {% endfor %}
+        {% for r in chart.refs %}
+            <line class="chart__ref" x1="{{ chart.pl }}" x2="{{ chart.pr }}" y1="{{ r.y }}" y2="{{ r.y }}"/>
+            <text class="chart__ref-text" x="{{ chart.pr }}" y="{{ r.text_y }}" text-anchor="end">{{ r.text }}</text>
+        {% endfor %}
+        {% for s in chart.series %}
+            {% if s.area %}<path class="chart__area chart__area--{{ s.cls }}" d="{{ s.area }}"/>{% endif %}
+            <path class="chart__line chart__line--{{ s.cls }}" d="{{ s.path }}" pathLength="1"/>
+            {% for p in s.points %}
+                <circle class="chart__dot chart__dot--{{ s.cls }}{% if p.flag %} is-flag{% endif %}" cx="{{ p.x }}" cy="{{ p.y }}" r="4.5"><title>{{ p.tip }}</title></circle>
+            {% endfor %}
+        {% endfor %}
+    </svg>
+</div>

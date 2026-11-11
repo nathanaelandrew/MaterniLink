@@ -1,0 +1,19 @@
+{% comment %}Expects: chart, label.{% endcomment %}
+<div class="chart" role="img" aria-label="{{ label }}">
+    <svg viewBox="0 0 {{ chart.w }} {{ chart.h }}" class="chart__svg" focusable="false">
+        {% for t in chart.yticks %}
+            <line class="chart__grid" x1="{{ chart.pl }}" x2="{{ chart.pr }}" y1="{{ t.y }}" y2="{{ t.y }}"/>
+            <text class="chart__tick" x="{{ chart.tick_x }}" y="{{ t.y }}" text-anchor="end" dominant-baseline="middle">{{ t.text }}</text>
+        {% endfor %}
+        {% for x in chart.xlabels %}
+            <text class="chart__tick" x="{{ x.x }}" y="{{ chart.label_y }}" text-anchor="middle">{{ x.text }}</text>
+        {% endfor %}
+        {% for b in chart.bars %}
+            <rect class="chart__bar{% if b.met %} is-goal{% endif %}" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="6"><title>{{ b.tip }}</title></rect>
+        {% endfor %}
+        {% if chart.goal %}
+            <line class="chart__ref" x1="{{ chart.pl }}" x2="{{ chart.pr }}" y1="{{ chart.goal.y }}" y2="{{ chart.goal.y }}"/>
+            <text class="chart__ref-text" x="{{ chart.pr }}" y="{{ chart.goal.text_y }}" text-anchor="end">{{ chart.goal.text }}</text>
+        {% endif %}
+    </svg>
+</div>

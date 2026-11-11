@@ -4,6 +4,7 @@ from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
 from .doctor_views import doctor_dashboard
+from .mother_views import annotate_reminders
 
 # Make sure KickCountLog is included in this import:
 from apps.profile.models import (
@@ -11,7 +12,8 @@ from apps.profile.models import (
     PregnancyProfile,
     MaternalHealthLog,
     Appointment,
-    KickCountLog
+    KickCountLog,
+    Reminder
 )
 
 @login_required
@@ -44,7 +46,15 @@ def dashboard(request):
     # 4. Get upcoming appointments
     appointments = Appointment.objects.filter(mother=mother).order_by('scheduled_datetime')[:3]
 
+    # 5. Today's reminders (first five; the full list lives on /home/reminders/)
+    all_reminders = annotate_reminders(
+        Reminder.objects.filter(mother=mother, is_active=True).order_by('scheduled_time', 'reminder_id')
+    ) if mother else []
+
     return render(request, 'home/mother_dashboard.html', {
+        'reminders': all_reminders[:5],
+        'reminders_total': len(all_reminders),
+        'reminders_left': sum(1 for r in all_reminders if not r.done),
         'mother': mother,
         'weeks': weeks,
         'latest_log': latest_log,

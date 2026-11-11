@@ -152,5 +152,30 @@
             </div>
         </div>
     </section>
+
+    <section class="dash__wide" data-reveal style="--d: 180ms">
+        <div class="panel">
+            <div class="panel__head">
+                <div>
+                    <h3 class="panel__title">Today's reminders</h3>
+                    <p class="panel__sub">{% if reminders_total %}{{ reminders_left }} left for today.{% else %}Medication, meals, movement and check-ups.{% endif %}</p>
+                </div>
+                <a href="{% url 'home:reminders' %}" class="link-arrow">
+                    {% if reminders_total %}Manage{% else %}Add a reminder{% endif %}
+                    <svg class="icon"><use href="#i-arrow-right"/></svg>
+                </a>
+            </div>
+
+            {% for r in reminders %}
+                {% include 'home/_reminder_row.html' with r=r return_to='dashboard' compact=True %}
+            {% empty %}
+                <div class="empty">
+                    <div class="empty__icon"><svg class="icon"><use href="#i-bell"/></svg></div>
+                    <h4>No reminders yet</h4>
+                    <p>Set one for your vitamins, a snack or a short walk.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 {% endblock %}

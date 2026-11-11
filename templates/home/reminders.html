@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Reminders · MaterniLink{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Daily routine</span>
+        <h1 class="page-title">Reminders</h1>
+        <p class="page-lead">Gentle nudges for medication, check-ups, meals and movement. They repeat every day; tick them off as you go.</p>
+    </div>
+</header>
+
+<div class="split">
+    <!-- Add -->
+    <section class="panel" data-reveal style="--d: 100ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">New reminder</h3>
+                <p class="panel__sub">Pick a category, a name and a time.</p>
+            </div>
+            <span class="stat__icon"><svg class="icon"><use href="#i-bell"/></svg></span>
+        </div>
+
+        <form method="post" novalidate id="reminderForm">
+            {% csrf_token %}
+
+            <div class="field {% if errors.category %}has-error{% endif %}">
+                <span class="field__label">Category</span>
+                <div class="chips">
+                    {% for c in categories %}
+                        <label class="chip">
+                            <input type="radio" name="category" value="{{ c }}" {% if form.category == c %}checked{% endif %}>
+                            <span>
+                                <svg class="icon"><use href="#{% if c == 'Medication' %}i-pill{% elif c == 'Check-up' %}i-stethoscope{% elif c == 'Eating' %}i-bowl{% else %}i-heart{% endif %}"/></svg>{{ c }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if errors.category %}<div class="field__error">{{ errors.category }}</div>{% endif %}
+            </div>
+
+            <div class="field {% if errors.title %}has-error{% endif %}">
+                <label class="field__label" for="id_title">Name</label>
+                <input id="id_title" name="title" type="text" maxlength="120" class="form-control" placeholder="e.g. Prenatal vitamin" value="{{ form.title }}">
+                {% if errors.title %}<div class="field__error">{{ errors.title }}</div>{% endif %}
+            </div>
+
+            <div class="field {% if errors.time %}has-error{% endif %}">
+                <label class="field__label" for="id_time">Time</label>
+                <input id="id_time" name="time" type="time" class="form-control" value="{{ form.time }}">
+                {% if errors.time %}<div class="field__error">{{ errors.time }}</div>{% endif %}
+            </div>
+
+            <div class="suggest">
+                <span class="label-caps">Quick ideas</span>
+                <div class="suggest__row">
+                    <button type="button" data-cat="Medication" data-title="Prenatal vitamin" data-time="08:00">Prenatal vitamin</button>
+                    <button type="button" data-cat="Eating" data-title="Healthy snack" data-time="15:00">Healthy snack</button>
+                    <button type="button" data-cat="Exercise" data-title="Gentle walk" data-time="17:30">Gentle walk</button>
+                    <button type="button" data-cat="Eating" data-title="Drink water" data-time="10:00">Drink water</button>
+                </div>
+            </div>
+
+            <button type="submit" class="button button--lg button--block mt-2">
+                Add reminder<svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
+            </button>
+        </form>
+    </section>
+
+    <!-- List -->
+    <section class="panel" data-reveal style="--d: 180ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Today</h3>
+                <p class="panel__sub">{% now "l, F j" %}</p>
+            </div>
+            {% if total %}<span class="pill pill--neutral">{{ done_count }} of {{ total }} done</span>{% endif %}
+        </div>
+
+        {% if total %}
+            <div class="progress-line" aria-hidden="true" style="margin-bottom:1rem">
+                <span style="width: {% widthratio done_count total 100 %}%"></span>
+            </div>
+        {% endif %}
+
+        {% for r in reminders %}
+            {% include 'home/_reminder_row.html' with r=r return_to='reminders' %}
+        {% empty %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-bell"/></svg></div>
+                <h4>No reminders yet</h4>
+                <p>Add your first one on the left, or tap a quick idea.</p>
+            </div>
+        {% endfor %}
+
+        <p class="chart-note">Reminders show here and on your dashboard. They don't send phone notifications.</p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var form = document.getElementById('reminderForm');
+        if (!form) { return; }
+        form.querySelectorAll('.suggest button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                form.querySelector('input[name="title"]').value = btn.dataset.title;
+                form.querySelector('input[name="time"]').value = btn.dataset.time;
+                var radio = form.querySelector('input[name="category"][value="' + btn.dataset.cat + '"]');
+                if (radio) { radio.checked = true; }
+            });
+        });
+    }());
+</script>
+{% endblock %}
