@@ -1915,3 +1915,122 @@ textarea.form-control { resize: vertical; min-height: 96px; }
        .appt-actions__form { width: 100%; }
        .appt-actions__form .button { flex: 1; }
    }
+
+   /* ==========================================================================
+   15. Mother tracking: charts and reminders
+   ========================================================================== */
+.trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; align-items: start; }
+.trend-grid__wide { grid-column: 1 / -1; }
+
+.legend { display: flex; gap: .9rem; font-size: .78rem; font-weight: 600; color: var(--ink-soft); }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.legend__dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.legend__dot--sage { background: var(--sage-600); }
+.legend__dot--clay { background: var(--clay-500); }
+
+/* Charts */
+.chart { margin: 0 -.25rem; }
+.chart__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart__grid { stroke: var(--line-soft); stroke-width: 1; }
+.chart__tick { fill: var(--ink-faint); font-size: 12.5px; font-family: var(--font-body); }
+.chart__ref { stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 4 5; opacity: .7; }
+.chart__ref-text { fill: var(--ink-soft); font-size: 12px; font-weight: 600; font-family: var(--font-body); stroke: #fff; stroke-width: 4px; paint-order: stroke; }
+
+.chart__line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: chart-draw 1.2s var(--ease) .2s forwards; }
+.chart__line--sage { stroke: var(--sage-600); }
+.chart__line--clay { stroke: var(--clay-500); }
+
+.chart__area { stroke: none; opacity: 0; animation: chart-fade .9s ease .9s forwards; }
+.chart__area--sage { fill: var(--sage-100); }
+
+.chart__dot { stroke: #fff; stroke-width: 2; opacity: 0; animation: chart-fade .4s ease 1s forwards; transition: r .2s var(--ease); }
+.chart__dot:hover { r: 6.5; }
+.chart__dot--sage { fill: var(--sage-600); }
+.chart__dot--clay { fill: var(--clay-500); }
+.chart__dot.is-flag { stroke: #D9786B; stroke-width: 2.5; }
+
+.chart__bar { fill: var(--sage-200); transform-box: fill-box; transform-origin: bottom; animation: chart-grow .8s var(--ease) .15s both; transition: fill .2s; }
+.chart__bar.is-goal { fill: var(--sage-600); }
+.chart__bar:hover { fill: var(--sage-500); }
+
+@keyframes chart-draw { to { stroke-dashoffset: 0; } }
+@keyframes chart-fade { to { opacity: 1; } }
+@keyframes chart-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.chart-note { margin: .9rem 0 0; font-size: .8rem; color: var(--ink-faint); }
+.disclaimer { margin: 1.75rem 0 0; font-size: .8rem; color: var(--ink-faint); max-width: 70ch; }
+
+/* Gentle blood pressure callout */
+.callout { display: flex; gap: .8rem; align-items: flex-start; margin-top: 1rem; padding: .9rem 1rem; border-radius: 14px; background: var(--sage-50); color: var(--sage-800); }
+.callout .icon { flex: none; width: 19px; height: 19px; margin-top: .1rem; }
+.callout strong { display: block; font-size: .92rem; }
+.callout p { margin: .15rem 0 0; font-size: .85rem; color: var(--ink-soft); }
+.callout--high { background: var(--amber-bg); color: var(--amber-ink); }
+.callout--low { background: var(--clay-50); color: #8A4A35; }
+.callout--urgent { background: var(--rose-bg); color: var(--rose-ink); }
+
+/* Reminders */
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chip { position: relative; margin: 0; cursor: pointer; }
+.chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.chip span { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .95rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-soft); font-size: .86rem; font-weight: 600; color: var(--ink-soft); transition: background .2s, color .2s, border-color .2s, transform .2s var(--ease); }
+.chip span .icon { width: 16px; height: 16px; }
+.chip:hover span { border-color: var(--sage-200); }
+.chip input:checked + span { background: var(--sage-700); border-color: var(--sage-700); color: #fff; }
+.chip input:focus-visible + span { outline: 2px solid var(--sage-500); outline-offset: 2px; }
+.chip:active span { transform: scale(.96); }
+
+.suggest { margin: 1.25rem 0 .5rem; }
+.suggest__row { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .5rem; }
+.suggest__row button { border: 1px dashed var(--sage-200); background: transparent; color: var(--sage-700); font: inherit; font-size: .8rem; font-weight: 600; padding: .35rem .8rem; border-radius: 999px; cursor: pointer; transition: background .2s, border-color .2s; }
+.suggest__row button:hover { background: var(--sage-50); border-color: var(--sage-500); }
+
+.rem { display: grid; grid-template-columns: auto 1fr auto; gap: .9rem; align-items: center; padding: .85rem 0; border-top: 1px solid var(--line-soft); }
+.panel__head + .rem,
+.progress-line + .rem { border-top: 0; padding-top: .25rem; }
+.rem form { margin: 0; }
+
+.rem__check { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--sage-200); background: #fff; color: transparent; cursor: pointer; transition: background .25s, border-color .25s, color .25s, transform .25s var(--ease-spring); }
+.rem__check .icon { width: 17px; height: 17px; }
+.rem__check:hover { border-color: var(--sage-500); }
+.rem__check:active { transform: scale(.88); }
+.rem.is-done .rem__check { background: var(--sage-600); border-color: var(--sage-600); color: #fff; }
+.rem.is-due .rem__check { border-color: var(--clay-400); }
+
+.rem__body { min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.rem__title { font-weight: 600; transition: color .25s; }
+.rem.is-done .rem__title { color: var(--ink-faint); text-decoration: line-through; text-decoration-thickness: 1px; }
+.rem__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .82rem; color: var(--ink-soft); }
+
+.rem__cat { padding: .1rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; letter-spacing: .04em; background: var(--sage-100); color: var(--sage-700); }
+.rem__cat--medication { background: var(--clay-50); color: #8A4A35; }
+.rem__cat--eating { background: var(--amber-bg); color: var(--amber-ink); }
+.rem__cat--exercise { background: #E4EEF2; color: #3F6270; }
+
+.icon-btn--sm { width: 34px; height: 34px; border-radius: 11px; border-color: transparent; background: transparent; color: var(--ink-faint); cursor: pointer; }
+.icon-btn--sm .icon { width: 16px; height: 16px; }
+.icon-btn--sm:hover { background: var(--rose-bg); color: var(--rose-ink); border-color: transparent; }
+
+@media (max-width: 991.98px) {
+    .trend-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 767.98px) {
+    .chart { overflow-x: auto; margin: 0; padding-bottom: .25rem; }
+    .chart__svg { min-width: 520px; }
+    .trend-grid__wide .chart__svg { min-width: 640px; }
+    .stats-3--rows { grid-template-columns: 1fr; }
+    .stats-3--rows .stat { flex-direction: row; align-items: center; gap: 1rem; padding: 1rem 1.1rem; }
+    .stats-3--rows .stat__icon { width: 44px; height: 44px; }
+    .stats-3--rows .stat__value { font-size: 2rem; }
+    .tabbar--5 { grid-template-columns: repeat(5, 1fr); }
+    .tabbar--5 a { font-size: .6rem; }
+    .legend { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chart__line, .chart__area, .chart__dot, .chart__bar { animation: none; stroke-dashoffset: 0; opacity: 1; transform: none; }
+}
+
+/* Let the scrollable charts shrink inside the grid instead of widening the page */
+.trend-grid > * { min-width: 0; }
