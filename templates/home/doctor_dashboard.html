@@ -16,6 +16,13 @@
     </a>
 </header>
 
+{% if doctor.last_name == 'Doctor' %}
+<div class="sync-note" data-reveal style="margin-bottom:1.25rem">
+    <svg class="icon"><use href="#i-user"/></svg>
+    <span>Patients currently see you as "Dr. Doctor". <a class="link-arrow" href="{% url 'profile:profile' %}">Add your real name</a></span>
+</div>
+{% endif %}
+
 <!-- Key numbers -->
 <section class="stats-3" data-stagger="80">
     <a href="{% url 'home:doctor_patients' %}" class="panel stat stat-link" data-reveal>
