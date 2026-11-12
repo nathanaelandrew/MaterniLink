@@ -71,6 +71,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.contrib.messages.context_processors.messages',
+                'apps.home.context_processors.badges',
             ],
         },
     },
@@ -127,6 +129,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
+
+# AI assistant (optional). Without a key the assistant answers from its built-in FAQ only.
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+CHATBOT_MODEL = os.environ.get('CHATBOT_MODEL', 'claude-haiku-5-5')
 
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = 'media/'
