@@ -2191,3 +2191,46 @@ textarea.form-control { resize: vertical; min-height: 96px; }
     .bubble { animation: none; }
     .chat-scroll { scroll-behavior: auto; }
 }
+
+/* ==========================================================================
+   18. Polish: settings, baby this week, error pages, reduced motion
+   ========================================================================== */
+/* Settings switches */
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; padding: 1rem 0; border-top: 1px solid var(--line-soft); cursor: pointer; }
+.panel__head + form > .switch-row:first-of-type, form > input[type="hidden"] + .switch-row { border-top: 0; padding-top: .25rem; }
+.switch-row__text { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.switch-row__text strong { font-weight: 600; }
+.switch-row__text span { font-size: .86rem; color: var(--ink-soft); }
+
+.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 46px; height: 27px; margin: 0; border-radius: 99px; background: var(--line); cursor: pointer; transition: background .25s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .2); transition: transform .25s var(--ease-spring); }
+.switch:checked { background: var(--sage-600); }
+.switch:checked::after { transform: translateX(19px); }
+.switch:focus-visible { outline: 2px solid var(--sage-500); outline-offset: 3px; }
+
+/* Baby this week */
+.baby { display: flex; gap: 1.5rem; align-items: flex-start; background: linear-gradient(135deg, var(--sage-50), #fff 55%); }
+.baby__badge { flex: none; width: 92px; height: 92px; border-radius: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--sage-700); color: #fff; box-shadow: 0 10px 24px rgba(46, 74, 60, .22); }
+.baby__badge span { font-size: .62rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.baby__badge strong { font-family: var(--font-display); font-size: 2.3rem; font-weight: 500; line-height: 1; }
+.baby__body { min-width: 0; }
+.baby__title { margin: .1rem 0 .5rem; font-size: clamp(1.3rem, 2.4vw, 1.7rem); }
+.baby__text { margin: 0 0 1rem; color: var(--ink-soft); max-width: 62ch; }
+.baby__tip { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem 1rem; border-radius: 14px; background: var(--clay-50); color: #6E3B2A; font-size: .92rem; max-width: 62ch; }
+.baby__tip .icon { flex: none; width: 18px; height: 18px; margin-top: .15rem; }
+
+/* Error pages */
+.error-page { text-align: center; padding: 3rem 2rem; margin-top: 2rem; }
+.error-page__code { font-size: .78rem; font-weight: 700; letter-spacing: .16em; color: var(--clay-500); }
+.error-page .page-title { font-size: clamp(1.7rem, 4vw, 2.3rem); margin: .5rem 0 .6rem; }
+.error-page .page-lead { margin: 0 auto 1.75rem; }
+
+/* "Reduce animations" preference (Settings) */
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: .001s !important; animation-delay: 0s !important; transition-duration: .001s !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+.reduce-motion .chart__line { stroke-dashoffset: 0; }
+
+@media (max-width: 767.98px) {
+    .baby { flex-direction: column; gap: 1rem; }
+    .baby__badge { width: 76px; height: 76px; border-radius: 22px; }
+    .baby__badge strong { font-size: 1.9rem; }
+}

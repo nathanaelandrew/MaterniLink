@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Page not found · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<section class="panel error-page" data-reveal>
+    <span class="error-page__code">404</span>
+    <h1 class="page-title">We can't find that page.</h1>
+    <p class="page-lead">The link may be old, or the page may have moved. Nothing is wrong with your account.</p>
+    <a href="/" class="button button--lg">Back to MaterniLink<svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg></a>
+</section>
+{% endblock %}

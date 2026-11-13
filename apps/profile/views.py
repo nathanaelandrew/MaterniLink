@@ -135,7 +135,7 @@ def appointments_view(request):
     default_doctor = active_pregnancy.doctor if active_pregnancy else DoctorProfile.objects.first()
 
     if request.method == 'POST':
-        form = AppointmentRequestForm(request.POST)
+        form = AppointmentRequestForm(request.POST, mother=mother)
         if form.is_valid():
             Appointment.objects.create(
                 mother=mother,

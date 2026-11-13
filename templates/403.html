@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Not allowed · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<section class="panel error-page" data-reveal>
+    <span class="error-page__code">403</span>
+    <h1 class="page-title">You don't have access to this.</h1>
+    <p class="page-lead">This page belongs to another account or role. If you think this is a mistake, sign in again.</p>
+    <a href="/" class="button button--lg">Back to MaterniLink<svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg></a>
+</section>
+{% endblock %}

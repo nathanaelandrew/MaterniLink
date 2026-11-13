@@ -4,6 +4,7 @@ from django.contrib import messages
 from datetime import date, timedelta
 from django.utils import timezone
 from .doctor_views import doctor_dashboard
+from .baby_weeks import baby_this_week
 from .mother_views import annotate_reminders
 
 from apps.profile.models import (
@@ -55,6 +56,8 @@ def dashboard(request):
         pregnancy__mother=mother, status='Requested').count() if mother else 0
 
     return render(request, 'home/mother_dashboard.html', {
+        'open_requests': open_requests,
+        'baby': baby_this_week(weeks) if pregnancy else None,
         'reminders': all_reminders[:5],
         'reminders_total': len(all_reminders),
         'reminders_left': sum(1 for r in all_reminders if not r.done),
@@ -85,8 +88,18 @@ def kick_counter(request):
         )
 
     if request.method == 'POST':
-        kick_count = int(request.POST.get('kick_count', 0))
-        duration_minutes = max(1, int(request.POST.get('duration_minutes', 1)))
+        try:
+            kick_count = int(request.POST.get('kick_count', 0))
+            duration_minutes = int(request.POST.get('duration_minutes', 1))
+        except (TypeError, ValueError):
+            messages.error(request, "That session could not be saved. Please try again.")
+            return redirect('home:kick_counter')
+        if kick_count < 1:
+            messages.error(request, "Count at least one movement before saving a session.")
+            return redirect('home:kick_counter')
+        # Keep the numbers within what a real session can be.
+        kick_count = min(kick_count, 500)
+        duration_minutes = min(max(1, duration_minutes), 240)
 
         end_time = timezone.now()
         start_time = end_time - timedelta(minutes=duration_minutes)

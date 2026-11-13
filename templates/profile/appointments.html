@@ -46,6 +46,7 @@
                     {% if form.appointment_time.errors %}<div class="field__error">{{ form.appointment_time.errors.0 }}</div>{% endif %}
                 </div>
             </div>
+            <div class="field__hint" style="margin:-.4rem 0 1rem">Visits take 30 minutes. If a time is taken, we will suggest the next free one.</div>
 
             <div class="field {% if form.reason.errors %}has-error{% endif %}">
                 <label class="field__label" for="{{ form.reason.id_for_label }}">Reason for visit</label>

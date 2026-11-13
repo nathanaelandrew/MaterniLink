@@ -109,6 +109,28 @@
         </div>
     </section>
 
+    {% if baby %}
+    <!-- Weekly development note -->
+    <section class="dash__wide" data-reveal style="--d: 140ms">
+        <div class="panel baby">
+            <div class="baby__badge" aria-hidden="true">
+                <span>Week</span>
+                <strong>{{ baby.week }}</strong>
+            </div>
+            <div class="baby__body">
+                <span class="eyebrow">Baby this week</span>
+                <h3 class="baby__title">About the size of {{ baby.size }}</h3>
+                <p class="baby__text">{{ baby.baby }}</p>
+                <div class="baby__tip">
+                    <svg class="icon"><use href="#i-heart"/></svg>
+                    <span><b>For you:</b> {{ baby.tip }}</span>
+                </div>
+                <p class="chart-note">General information. Every pregnancy is different, so sizes and timing vary.</p>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    
     <!-- Upcoming appointments -->
     <section class="dash__wide" data-reveal style="--d: 150ms">
         <div class="panel">

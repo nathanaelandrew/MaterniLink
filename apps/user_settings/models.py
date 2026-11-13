@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 
+
 class UserSettings(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -9,3 +10,5 @@ class UserSettings(models.Model):
     )
     dark_mode = models.BooleanField(default=False)
     email_notifications = models.BooleanField(default=True)
+    reduce_motion = models.BooleanField(default=False)
+    show_assistant = models.BooleanField(default=True)

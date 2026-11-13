@@ -1,52 +1,112 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Settings - MaterniLink{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/user_settings/settings.css' %}">
-{% endblock %}
+{% block title %}Settings · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
 
 {% block content %}
-<div class="feature-wrapper">
-    <header class="feature-header">
-        <span class="feature-brand">MaterniLink</span>
-        <nav class="feature-nav">
-            <a href="{% url 'home:home' %}">Home</a>
-            <a href="{% url 'profile:profile' %}">Profile</a>
-        </nav>
-    </header>
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Your account</span>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-lead">Choose how MaterniLink works for you, and keep your sign-in details up to date.</p>
+    </div>
+</header>
 
-    <main class="feature-main">
-        <div class="feature-card">
-            <h1>Settings</h1>
+<nav class="seg" aria-label="Account sections" data-reveal style="--d: 60ms; margin-bottom:1.25rem">
+    <a href="{% url 'profile:profile' %}">Profile</a>
+    <a href="{% url 'user_settings:settings' %}" class="is-active" aria-current="page">Settings</a>
+</nav>
 
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="message">{{ message }}</p>
-                {% endfor %}
+<div class="stack">
+    <!-- Preferences -->
+    <section class="panel" data-reveal style="--d: 100ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Preferences</h3>
+                <p class="panel__sub">These apply on every device you sign in on.</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="preferences">
+
+            <label class="switch-row">
+                <span class="switch-row__text">
+                    <strong>Email notifications</strong>
+                    <span>Get an email when there is a new notification. Emails never include health details.</span>
+                </span>
+                <input type="checkbox" class="switch" name="email_notifications" {% if prefs.email_notifications %}checked{% endif %}>
+            </label>
+
+            <label class="switch-row">
+                <span class="switch-row__text">
+                    <strong>Reduce animations</strong>
+                    <span>Turn off movement and fade effects across the site.</span>
+                </span>
+                <input type="checkbox" class="switch" name="reduce_motion" {% if prefs.reduce_motion %}checked{% endif %}>
+            </label>
+
+            {% if not is_doctor %}
+                <label class="switch-row">
+                    <span class="switch-row__text">
+                        <strong>Show the Ask button</strong>
+                        <span>Keep the floating shortcut to the FAQ assistant on every page.</span>
+                    </span>
+                    <input type="checkbox" class="switch" name="show_assistant" {% if prefs.show_assistant %}checked{% endif %}>
+                </label>
+            {% else %}
+                {% if prefs.show_assistant %}<input type="hidden" name="show_assistant" value="on">{% endif %}
             {% endif %}
 
-            <form method="post">
-                {% csrf_token %}
+            <button type="submit" class="button mt-3">Save preferences</button>
+        </form>
+    </section>
 
-                <div class="toggle-row">
-                    <span>Dark mode</span>
-                    <input type="checkbox" id="dark_mode" name="dark_mode" {% if settings_obj.dark_mode %}checked{% endif %}>
-                </div>
-
-                <div class="toggle-row">
-                    <span>Email notifications</span>
-                    <input type="checkbox" id="email_notifications" name="email_notifications" {% if settings_obj.email_notifications %}checked{% endif %}>
-                </div>
-
-                <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Save settings</button>
-            </form>
+    <!-- Email -->
+    <section class="panel" data-reveal style="--d: 140ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Email address</h3>
+                <p class="panel__sub">Signed in as <b>{{ user.username }}</b>.</p>
+            </div>
         </div>
-    </main>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/user_settings/settings.js' %}"></script>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="email">
+            <div class="field {% if email_form.email.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ email_form.email.id_for_label }}">Email</label>
+                {{ email_form.email }}
+                {% if email_form.email.errors %}<div class="field__error">{{ email_form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <button type="submit" class="button button--soft">Update email</button>
+        </form>
+    </section>
+
+    <!-- Password -->
+    <section class="panel" data-reveal style="--d: 180ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Password</h3>
+                <p class="panel__sub">Use at least 8 characters that are hard to guess.</p>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password">
+            {% for field in password_form %}
+                <div class="field {% if field.errors %}has-error{% endif %}">
+                    <label class="field__label" for="{{ field.id_for_label }}">
+                        {% if field.name == 'old_password' %}Current password{% elif field.name == 'new_password1' %}New password{% else %}Repeat new password{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}<div class="field__error">{{ field.errors.0 }}</div>{% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="button button--soft">Change password</button>
+        </form>
+    </section>
+</div>
 {% endblock %}

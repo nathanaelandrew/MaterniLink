@@ -18,7 +18,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/maternilink.css' %}" rel="stylesheet">
 </head>
-<body>
+<body class="{% if prefs.reduce_motion %}reduce-motion{% endif %}">
 
     <!-- Icon sprite: <svg class="icon"><use href="#i-name"/></svg> -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -66,7 +66,7 @@
         <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
         <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
         <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></symbol>
-        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
         <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"/></symbol>
         <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></symbol>
     </svg>
@@ -145,6 +145,11 @@
                                 <svg class="icon"><use href="#i-user"/></svg>View profile
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'user_settings:settings' %}">
+                                <svg class="icon"><use href="#i-settings"/></svg>Settings
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <!-- Logout must be a POST in Django 5 -->
@@ -221,7 +226,8 @@
             </nav>
         {% endif %}
 
-    {% if user.is_authenticated and user.role != 'Doctor' and request.resolver_match.view_name != 'home:assistant' and request.resolver_match.view_name != 'home:thread' %}
+    {% if user.is_authenticated and user.role != 'Doctor' and prefs.show_assistant and request.resolver_match.view_name != 'home:assistant' and request.resolver_match.view_name != 'home:thread' %}
+        <!-- Floating shortcut to the FAQ assistant (mothers) -->
         <a href="{% url 'home:assistant' %}" class="fab" aria-label="Ask the assistant">
             <svg class="icon"><use href="#i-sparkle"/></svg><span>Ask</span>
         </a>

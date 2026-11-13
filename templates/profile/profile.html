@@ -17,6 +17,11 @@
     </a>
 </header>
 
+<nav class="seg" aria-label="Account sections" data-reveal style="--d: 60ms; margin-bottom:1.25rem">
+    <a href="{% url 'profile:profile' %}" class="is-active" aria-current="page">Profile</a>
+    <a href="{% url 'user_settings:settings' %}">Settings</a>
+</nav>
+
 <section class="panel" data-reveal style="--d: 80ms">
     <div class="panel__head">
         <div>
