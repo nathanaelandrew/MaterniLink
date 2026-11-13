@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Assistant · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Pregnancy FAQ</span>
+        <h1 class="page-title">Ask the assistant</h1>
+        <p class="page-lead">Quick answers about pregnancy, appointments, medication and using MaterniLink.</p>
+    </div>
+    {% if history %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="action" value="clear" class="button button--ghost">Clear chat</button>
+        </form>
+    {% endif %}
+</header>
+
+<!-- Always visible -->
+<div class="callout callout--high" role="note" data-reveal style="margin:0 0 1.25rem">
+    <svg class="icon"><use href="#i-info"/></svg>
+    <div>
+        <strong>Not medical advice</strong>
+        <p>{{ disclaimer }}</p>
+    </div>
+</div>
+
+<section class="panel chat-thread chat-thread--bot" data-reveal style="--d: 80ms">
+    <div class="chat-scroll" id="botScroll" aria-live="polite">
+        <div class="bubble">
+            <p>Hello{% if mother %} {{ mother.first_name }}{% endif %}. Ask me a question, or tap one of the ideas below.</p>
+        </div>
+        {% for m in history %}
+            <div class="bubble {% if m.role == 'user' %}bubble--mine{% elif m.urgent %}bubble--urgent{% endif %}">
+                <p>{{ m.text }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="suggest__row" id="botIdeas" style="margin:0 0 .9rem">
+        {% for s in suggestions %}<button type="button">{{ s }}</button>{% endfor %}
+    </div>
+
+    <form method="post" class="chat-form" id="botForm">
+        {% csrf_token %}
+        <input type="text" name="question" maxlength="{{ max_length }}" class="form-control" placeholder="Type your question" aria-label="Your question" autocomplete="off" required>
+        <button type="submit" class="button" aria-label="Send"><svg class="icon"><use href="#i-send"/></svg><span>Send</span></button>
+    </form>
+    <p class="chart-note">General information only, not medical advice. For urgent symptoms, contact your doctor or go to the hospital.</p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var box = document.getElementById('botScroll');
+        var form = document.getElementById('botForm');
+        var input = form.querySelector('input[name="question"]');
+        var token = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        box.scrollTop = box.scrollHeight;
+
+        function bubble(text, cls) {
+            var b = document.createElement('div');
+            b.className = 'bubble' + (cls ? ' ' + cls : '');
+            var p = document.createElement('p');
+            p.textContent = text;              /* textContent: never HTML */
+            b.appendChild(p);
+            box.appendChild(b);
+            box.scrollTop = box.scrollHeight;
+            return b;
+        }
+
+        function ask(question) {
+            question = question.trim();
+            if (!question) { return; }
+            bubble(question, 'bubble--mine');
+            input.value = '';
+            var typing = bubble('Thinking…', 'bubble--typing');
+            var data = new FormData();
+            data.append('question', question);
+            fetch(form.action || window.location.href, {
+                method: 'POST', body: data, credentials: 'same-origin',
+                headers: { 'X-CSRFToken': token, 'X-Requested-With': 'fetch' }
+            })
+                .then(function (r) { if (!r.ok) { throw new Error(); } return r.json(); })
+                .then(function (d) { typing.remove(); bubble(d.reply, d.urgent ? 'bubble--urgent' : ''); })
+                .catch(function () {
+                    typing.remove();
+                    bubble('Sorry, something went wrong. Please try again.', '');
+                });
+        }
+
+        form.addEventListener('submit', function (e) { e.preventDefault(); ask(input.value); });
+        document.querySelectorAll('#botIdeas button').forEach(function (btn) {
+            btn.addEventListener('click', function () { ask(btn.textContent); });
+        });
+    }());
+</script>
+{% endblock %}

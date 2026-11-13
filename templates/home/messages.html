@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Messages · MaterniLink{% endblock %}
+
+{% block content %}
+<header class="page-head {% if active %}page-head--hide-sm{% endif %}" data-reveal>
+    <div>
+        <span class="eyebrow">{% if user.role == 'Doctor' %}Your patients{% else %}Your care team{% endif %}</span>
+        <h1 class="page-title">Messages</h1>
+    </div>
+</header>
+
+<div class="chat-layout {% if active %}has-active{% endif %}" data-reveal style="--d: 80ms">
+    <!-- Conversations -->
+    <aside class="panel chat-list" aria-label="Conversations">
+        {% for c in contacts %}
+            <a class="chat-contact {% if active and active.user_id == c.user_id %}is-active{% endif %}" href="{% url 'home:thread' c.user_id %}">
+                <span class="avatar">{{ c.name|cut:"Dr. "|first|upper }}</span>
+                <span class="chat-contact__body">
+                    <strong>{{ c.name }}</strong>
+                    <span class="muted-sm">
+                        {% if c.last %}{% if c.last.sender_id == user.pk %}You: {% endif %}{{ c.last.message_body|truncatechars:36 }}{% else %}{{ c.sub }}{% endif %}
+                    </span>
+                </span>
+                {% if c.unread %}<span class="count-badge" aria-label="{{ c.unread }} unread">{{ c.unread }}</span>{% endif %}
+            </a>
+        {% empty %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-chat"/></svg></div>
+                <h4>No conversations yet</h4>
+                {% if user.role == 'Doctor' %}
+                    <p>Patients appear here once they book a visit with you.</p>
+                {% else %}
+                    <p>Request a visit with a doctor and you will be able to message them here.</p>
+                    <a href="{% url 'profile:appointments' %}" class="link-arrow">Book a visit<svg class="icon"><use href="#i-arrow-right"/></svg></a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </aside>
+
+    <!-- Thread -->
+    <section class="panel chat-thread">
+        {% if active %}
+            <div class="chat-head">
+                <a class="icon-btn chat-back" href="{% url 'home:messages' %}" aria-label="All conversations"><svg class="icon"><use href="#i-chevron-left"/></svg></a>
+                <span class="avatar">{{ active.name|cut:"Dr. "|first|upper }}</span>
+                <div>
+                    <strong>{{ active.name }}</strong>
+                    <div class="muted-sm">{{ active.sub }}</div>
+                </div>
+            </div>
+
+            <div class="chat-scroll" id="chatScroll" data-poll="{% url 'home:thread_poll' active.user_id %}" data-last="{{ last_id }}" aria-live="polite">
+                {% for m in thread %}
+                    {% ifchanged m.sent_at|date:"Y-m-d" %}<div class="chat-day">{{ m.sent_at|date:"l, M j" }}</div>{% endifchanged %}
+                    <div class="bubble {% if m.sender_id == user.pk %}bubble--mine{% endif %}">
+                        <p>{{ m.message_body }}</p>
+                        <span class="bubble__time">{{ m.sent_at|time:"g:i A" }}</span>
+                    </div>
+                {% empty %}
+                    <div class="chat-empty" id="chatEmpty">No messages yet. Say hello.</div>
+                {% endfor %}
+            </div>
+
+            <form method="post" class="chat-form" id="chatForm">
+                {% csrf_token %}
+                <textarea name="body" rows="1" maxlength="{{ max_length }}" class="form-control" placeholder="Write a message" aria-label="Message" required></textarea>
+                <button type="submit" class="button" aria-label="Send"><svg class="icon"><use href="#i-send"/></svg><span>Send</span></button>
+            </form>
+            <p class="chart-note">Messages are not for emergencies. If it is urgent, call the clinic or go to the nearest hospital.</p>
+        {% else %}
+            <div class="empty chat-placeholder">
+                <div class="empty__icon"><svg class="icon"><use href="#i-chat"/></svg></div>
+                <h4>Choose a conversation</h4>
+                <p>Pick someone on the left to read and send messages.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if active %}
+<script>
+    (function () {
+        var box = document.getElementById('chatScroll');
+        var form = document.getElementById('chatForm');
+        var input = form.querySelector('textarea');
+        var last = parseInt(box.dataset.last, 10) || 0;
+        box.scrollTop = box.scrollHeight;
+        input.focus();
+
+        /* Enter sends, Shift+Enter makes a new line */
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (input.value.trim()) { form.requestSubmit(); }
+            }
+        });
+
+        function add(m) {
+            var empty = document.getElementById('chatEmpty');
+            if (empty) { empty.remove(); }
+            var b = document.createElement('div');
+            b.className = 'bubble' + (m.mine ? ' bubble--mine' : '');
+            var p = document.createElement('p');
+            p.textContent = m.body;            /* textContent: never HTML */
+            var t = document.createElement('span');
+            t.className = 'bubble__time';
+            t.textContent = m.time;
+            b.appendChild(p); b.appendChild(t);
+            box.appendChild(b);
+        }
+
+        /* Look for new messages every 8 seconds while the tab is visible */
+        setInterval(function () {
+            if (document.hidden) { return; }
+            fetch(box.dataset.poll + '?after=' + last, { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : { messages: [] }; })
+                .then(function (data) {
+                    var nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+                    data.messages.forEach(function (m) { add(m); last = Math.max(last, m.id); });
+                    if (data.messages.length && nearBottom) { box.scrollTop = box.scrollHeight; }
+                })
+                .catch(function () {});
+        }, 8000);
+    }());
+</script>
+{% endif %}
+{% endblock %}

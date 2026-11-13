@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Updates</span>
+        <h1 class="page-title">Notifications</h1>
+        <p class="page-lead">{% if unread %}You have {{ unread }} unread notification{{ unread|pluralize }}.{% else %}You're all caught up.{% endif %}</p>
+    </div>
+    {% if unread %}
+        <form method="post" action="{% url 'home:notifications_read_all' %}">
+            {% csrf_token %}
+            <button type="submit" class="button button--ghost"><svg class="icon"><use href="#i-check"/></svg>Mark all as read</button>
+        </form>
+    {% endif %}
+</header>
+
+<section class="panel" data-reveal style="--d: 80ms">
+    {% for n in items %}
+        <a class="notif {% if not n.is_read %}is-unread{% endif %}" href="{% url 'home:notification_open' n.pk %}">
+            <span class="notif__dot" aria-hidden="true"></span>
+            <span class="notif__body">
+                <strong>{{ n.title }}</strong>
+                <span>{{ n.content }}</span>
+            </span>
+            <span class="notif__time">{{ n.created_at|timesince }} ago</span>
+        </a>
+    {% empty %}
+        <div class="empty">
+            <div class="empty__icon"><svg class="icon"><use href="#i-bell"/></svg></div>
+            <h4>No notifications yet</h4>
+            <p>Updates about appointments, prescriptions and test results will appear here.</p>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}
