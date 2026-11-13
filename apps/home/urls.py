@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, doctor_views, mother_views, records_views
+from . import views, doctor_views, mother_views, records_views, comm_views
 
 app_name = 'home'
 
@@ -12,6 +12,15 @@ urlpatterns = [
     path('reminders/', mother_views.reminders, name='reminders'),
     path('reminders/<int:reminder_id>/toggle/', mother_views.reminder_toggle, name='reminder_toggle'),
     path('reminders/<int:reminder_id>/delete/', mother_views.reminder_delete, name='reminder_delete'),
+
+    # Communication
+    path('messages/', comm_views.inbox, name='messages'),
+    path('messages/<int:user_id>/', comm_views.inbox, name='thread'),
+    path('messages/<int:user_id>/poll/', comm_views.thread_poll, name='thread_poll'),
+    path('notifications/', comm_views.notifications, name='notifications'),
+    path('notifications/read-all/', comm_views.notifications_read_all, name='notifications_read_all'),
+    path('notifications/<int:notification_id>/open/', comm_views.notification_open, name='notification_open'),
+    path('assistant/', comm_views.assistant, name='assistant'),
 
     # Records
     path('records/', records_views.records, name='records'),

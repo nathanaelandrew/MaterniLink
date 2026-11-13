@@ -13,6 +13,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from .notify import notify
+
 from apps.profile.models import (
     Appointment,
     ClinicalNote,
