@@ -173,11 +173,17 @@ def appointment_respond(request, doctor, appointment_id):
             appt.status = 'Accepted'
             appt.save(update_fields=['status'])
             messages.success(request, f"Appointment with {patient} accepted.")
+            notify(appt.mother.user, "Appointment accepted",
+                   f"{doctor} accepted your visit on {timezone.localtime(appt.scheduled_datetime).strftime('%b %d at %I:%M %p')}.",
+                   reverse('profile:appointments'))
 
     elif action == 'decline':
         appt.status = 'Declined'
         appt.save(update_fields=['status'])
         messages.success(request, f"Appointment with {patient} declined.")
+        notify(appt.mother.user, "Appointment declined",
+               f"{doctor} could not take your visit on {timezone.localtime(appt.scheduled_datetime).strftime('%b %d at %I:%M %p')}. You can request another time.",
+               reverse('profile:appointments'))
 
     elif action == 'reschedule':
         try:
@@ -198,6 +204,9 @@ def appointment_respond(request, doctor, appointment_id):
                 appt.status = 'Rescheduled'
                 appt.save(update_fields=['scheduled_datetime', 'status'])
                 messages.success(request, f"Appointment with {patient} moved to {new_dt.strftime('%b %d at %I:%M %p')}.")
+                notify(appt.mother.user, "Appointment rescheduled",
+                       f"{doctor} moved your visit to {new_dt.strftime('%b %d at %I:%M %p')}.",
+                       reverse('profile:appointments'))
     else:
         messages.error(request, "Unknown action.")
 

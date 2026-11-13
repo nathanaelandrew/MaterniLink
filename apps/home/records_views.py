@@ -23,6 +23,7 @@ from apps.profile.models import (
 
 from .doctor_views import CONFIRMED, doctor_required, patients_of
 from .mother_views import mother_required
+from .notify import notify
 from .records_forms import (
     ClinicalNoteForm,
     OrderForm,
@@ -54,6 +55,21 @@ def _save_upload(request, pregnancy, form, order):
     if order and order.status == OPEN:
         order.status = 'Completed'
         order.save(update_fields=['status'])
+
+    mother = pregnancy.mother
+    kind = record.record_type.lower()
+    if request.user.pk == mother.user_id:
+        # The patient uploaded: tell the doctor who asked (or her main doctor).
+        doctor = order.doctor if order else pregnancy.doctor
+        if doctor and doctor.user_id != request.user.pk:
+            notify(doctor.user, "New result uploaded",
+                   f"{mother.first_name} {mother.last_name} uploaded a {kind} result"
+                   + (f" for {order.test_name}." if order else "."),
+                   reverse('home:doctor_patient_detail', args=[mother.pk]))
+    else:
+        notify(mother.user, "New result in your records",
+               f"Your doctor added a {kind} result to your records.",
+               f"{reverse('home:records')}?tab={'ultrasound' if record.record_type == 'Ultrasound' else 'labs'}")
     return record
 
 
@@ -180,6 +196,9 @@ def doctor_orders(request, doctor):
             status=OPEN,
         )
         messages.success(request, f"{form.cleaned_data['request_type']} request sent to {mother.first_name}.")
+        notify(mother.user, "Your doctor requested a test",
+               f"{doctor} requested: {form.cleaned_data['test_name'].strip()}. Upload the result when it is ready.",
+               reverse('home:records'))
         return redirect('home:doctor_orders')
 
     tab = request.GET.get('tab', 'open')
@@ -216,7 +235,6 @@ def _patient_and_pregnancy(request, doctor, mother_id):
     mother = get_object_or_404(patients_of(doctor), pk=mother_id)
     return mother, ongoing_pregnancy(mother)
 
-
 @doctor_required
 def doctor_prescribe(request, doctor, mother_id):
     mother, pregnancy = _patient_and_pregnancy(request, doctor, mother_id)
@@ -231,6 +249,9 @@ def doctor_prescribe(request, doctor, mother_id):
         rx.pregnancy, rx.doctor, rx.prescribed_date = pregnancy, doctor, timezone.localdate()
         rx.save()
         messages.success(request, f"Prescription for {rx.medication_name} saved.")
+        notify(mother.user, "New prescription",
+               f"{doctor} prescribed {rx.medication_name} ({rx.dosage}).",
+               reverse('home:records'))
         return redirect(back)
 
     return render(request, 'home/doctor_prescribe.html', {

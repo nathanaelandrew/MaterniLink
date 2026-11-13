@@ -145,11 +145,17 @@ def appointments_view(request):
                 status='Pending'
             )
             messages.success(request, "Your appointment request has been sent for review.")
+            chosen = form.cleaned_data['doctor']
+            if chosen.user_id != user.pk:
+                from apps.home.notify import notify
+                notify(chosen.user, "New appointment request",
+                       f"{mother.first_name} {mother.last_name} requested a visit on "
+                       f"{form.cleaned_data['scheduled_datetime'].strftime('%b %d at %I:%M %p')}.",
+                       '/home/requests/')
             return redirect('profile:appointments')
     else:
         form = AppointmentRequestForm(initial={'doctor': default_doctor})
 
-    # Fetch all appointments for this mother (latest first)
     my_appointments = Appointment.objects.filter(mother=mother).order_by('-scheduled_datetime')
 
     return render(request, 'profile/appointments.html', {
