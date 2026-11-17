@@ -25,6 +25,14 @@
             <span class="stat__icon"><svg class="icon"><use href="#i-calendar-plus"/></svg></span>
         </div>
 
+        {% if not has_doctors %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-stethoscope"/></svg></div>
+                <h4>No doctors available yet</h4>
+                <p>Once a doctor creates a MaterniLink account, you can request a visit with them here.</p>
+            </div>
+        {% else %}
+
         <form method="POST" novalidate>
             {% csrf_token %}
 
@@ -59,6 +67,7 @@
                 <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
             </button>
         </form>
+        {% endif %}
     </section>
 
     <!-- RIGHT: my appointments -->

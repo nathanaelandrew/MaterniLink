@@ -105,7 +105,11 @@
 
         <div class="sync-note" data-reveal style="--d: 400ms">
             <svg class="icon"><use href="#i-shield"/></svg>
-            <span>Your data is securely synced with <b>{{ doctor_name|default:"Dr. Mendoza" }}</b></span>
+            {% if doctor_name %}
+                <span>Your data is securely shared with <b>{{ doctor_name }}</b></span>
+            {% else %}
+                <span>No doctor assigned yet. <a href="{% url 'profile:appointments' %}">Book a visit</a> to connect with one.</span>
+            {% endif %}
         </div>
     </section>
 

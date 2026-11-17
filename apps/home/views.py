@@ -31,7 +31,7 @@ def dashboard(request):
     # 2. Fetch Active Pregnancy & Calculate Weeks
     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
     weeks = 0
-    doctor_name = "Dr. Mendoza"
+    doctor_name = None
     
     if pregnancy:
         if pregnancy.lmp_date:
@@ -39,7 +39,8 @@ def dashboard(request):
             weeks = max(0, delta.days // 7)
         
         if pregnancy.doctor:
-            doctor_name = f"Dr. {pregnancy.doctor.last_name}"
+            d = pregnancy.doctor
+            doctor_name = f"Dr. {d.first_name if d.last_name == 'Doctor' else d.last_name}"
             
     # 3. Get latest vitals
     latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
