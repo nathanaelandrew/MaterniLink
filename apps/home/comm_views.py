@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -58,6 +59,47 @@ def contacts_for(user):
 def _stamp(dt):
     return timezone.localtime(dt).strftime('%I:%M %p').lstrip('0')
 
+def _ago(dt):
+    """Short relative time for the header dropdowns: now, 5m, 3h, 2d, Nov 3."""
+    seconds = (timezone.now() - dt).total_seconds()
+    if seconds < 60:
+        return 'now'
+    if seconds < 3600:
+        return f"{int(seconds // 60)}m"
+    if seconds < 86400:
+        return f"{int(seconds // 3600)}h"
+    if seconds < 7 * 86400:
+        return f"{int(seconds // 86400)}d"
+    return timezone.localtime(dt).strftime('%b %d').replace(' 0', ' ')
+
+
+def _initial(name):
+    return (name.replace('Dr. ', '', 1)[:1] or '?').upper()
+
+
+def _message_json(m, user):
+    return {'id': m.pk, 'body': m.message_body, 'mine': m.sender_id == user.pk, 'time': _stamp(m.sent_at)}
+
+
+def conversations_for(user, people=None):
+    """Contacts with their last message and unread count, newest first."""
+    people = people if people is not None else contacts_for(user)
+    for p in people.values():
+        p.update(last=None, unread=0)
+    recent = Message.objects.filter(Q(sender=user) | Q(receiver=user)).order_by('-sent_at')[:500]
+    for m in recent:
+        other = m.receiver_id if m.sender_id == user.pk else m.sender_id
+        p = people.get(other)
+        if not p:
+            continue
+        if p['last'] is None:
+            p['last'] = m
+        if m.receiver_id == user.pk and not m.is_read:
+            p['unread'] += 1
+    return sorted(people.values(),
+                  key=lambda p: (p['last'].sent_at.timestamp() if p['last'] else 0, p['name']),
+                  reverse=True)
+
 
 def _conversation(user, other_id):
     return Message.objects.filter(
@@ -74,30 +116,23 @@ def inbox(request, user_id=None):
 
     if request.method == 'POST' and user_id is not None:
         body = request.POST.get('body', '').strip()
+        wants_json = request.headers.get('X-Requested-With') == 'fetch'
+        error = None
         if not body:
-            flash.error(request, "Write a message first.")
+            error = "Write a message first."
         elif len(body) > MAX_MESSAGE_LENGTH:
-            flash.error(request, f"Messages can be up to {MAX_MESSAGE_LENGTH} characters.")
+            error = f"Messages can be up to {MAX_MESSAGE_LENGTH} characters."
         else:
-            Message.objects.create(sender=user, receiver_id=user_id, message_body=body)
+            m = Message.objects.create(sender=user, receiver_id=user_id, message_body=body)
+            if wants_json:
+                return JsonResponse({'message': _message_json(m, user)})
+        if wants_json:
+            return JsonResponse({'error': error}, status=400)
+        if error:
+            flash.error(request, error)
         return redirect('home:thread', user_id=user_id)
 
-    # Last message and unread count per contact
-    for p in people.values():
-        p.update(last=None, unread=0)
-    recent = Message.objects.filter(Q(sender=user) | Q(receiver=user)).order_by('-sent_at')[:500]
-    for m in recent:
-        other = m.receiver_id if m.sender_id == user.pk else m.sender_id
-        p = people.get(other)
-        if not p:
-            continue
-        if p['last'] is None:
-            p['last'] = m
-        if m.receiver_id == user.pk and not m.is_read:
-            p['unread'] += 1
-    contacts = sorted(people.values(),
-                      key=lambda p: (p['last'].sent_at.timestamp() if p['last'] else 0, p['name']),
-                      reverse=True)
+    contacts = conversations_for(user, people)
 
     active, thread = None, []
     if user_id is not None:
@@ -115,20 +150,66 @@ def inbox(request, user_id=None):
 
 @login_required
 def thread_poll(request, user_id):
-    """New messages in a conversation since ?after=<id>, as JSON."""
+    """Messages in a conversation as JSON.
+
+    ?after=<id>  only messages newer than that id (0 = the latest 50)
+    ?read=0      don't mark anything as read (used by minimized chat boxes)
+    """
     user = request.user
-    if user_id not in contacts_for(user):
+    people = contacts_for(user)
+    if user_id not in people:
         raise Http404
     try:
         after = int(request.GET.get('after', 0))
     except ValueError:
         after = 0
-    new = list(_conversation(user, user_id).filter(pk__gt=after).order_by('sent_at')[:50])
-    Message.objects.filter(pk__in=[m.pk for m in new if m.receiver_id == user.pk]).update(is_read=True)
-    return JsonResponse({'messages': [
-        {'id': m.pk, 'body': m.message_body, 'mine': m.sender_id == user.pk, 'time': _stamp(m.sent_at)}
-        for m in new
-    ]})
+
+    convo = _conversation(user, user_id)
+    if after > 0:
+        new = list(convo.filter(pk__gt=after).order_by('sent_at')[:50])
+    else:
+        new = list(convo.order_by('-sent_at')[:50])[::-1]
+
+    if request.GET.get('read', '1') != '0':
+        convo.filter(receiver=user, is_read=False).update(is_read=True)
+        unread = 0
+    else:
+        unread = convo.filter(receiver=user, is_read=False).count()
+
+    contact = people[user_id]
+    return JsonResponse({
+        'contact': {'user_id': user_id, 'name': contact['name'], 'initial': _initial(contact['name']),
+                    'sub': contact['sub'], 'url': reverse('home:thread', args=[user_id])},
+        'unread': unread,
+        'messages': [_message_json(m, user) for m in new],
+    })
+
+
+@login_required
+def messages_recent(request):
+    """The latest conversations for the header dropdown."""
+    user = request.user
+    rows = []
+    for c in conversations_for(user)[:8]:
+        last = c['last']
+        rows.append({
+            'user_id': c['user_id'], 'name': c['name'], 'initial': _initial(c['name']),
+            'preview': (('You: ' if last.sender_id == user.pk else '') + last.message_body[:80]) if last else c['sub'],
+            'time': _ago(last.sent_at) if last else '',
+            'unread': c['unread'],
+            'url': reverse('home:thread', args=[c['user_id']]),
+        })
+    return JsonResponse({'conversations': rows})
+
+
+@login_required
+def badges_json(request):
+    """Unread counts, so the header badges can refresh without a page load."""
+    user = request.user
+    return JsonResponse({
+        'messages': Message.objects.filter(receiver=user, is_read=False).count(),
+        'notifications': Notification.objects.filter(user=user, is_read=False).count(),
+    })
 
 
 # --------------------------------------------------------------------------
@@ -157,9 +238,21 @@ def notification_open(request, notification_id):
 
 
 @login_required
+def notifications_recent(request):
+    """The latest notifications for the header dropdown."""
+    items = Notification.objects.filter(user=request.user).order_by('-created_at')[:8]
+    return JsonResponse({'notifications': [{
+        'id': n.pk, 'title': n.title, 'content': n.content[:160], 'time': _ago(n.created_at),
+        'unread': not n.is_read, 'url': reverse('home:notification_open', args=[n.pk]),
+    } for n in items]})
+
+
+@login_required
 @require_POST
 def notifications_read_all(request):
     Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    if request.headers.get('X-Requested-With') == 'fetch':
+        return JsonResponse({'ok': True})
     return redirect('home:notifications')
 
 

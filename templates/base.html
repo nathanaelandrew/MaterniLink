@@ -69,6 +69,9 @@
         <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
         <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"/></symbol>
         <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+        <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></symbol>
     </svg>
 
     {% firstof mother.first_name user.username as display_name %}
@@ -123,14 +126,45 @@
                 {% endif %}
 
                 <div class="header-tools">
-                    <a class="tool-btn {% if request.resolver_match.view_name == 'home:messages' or request.resolver_match.view_name == 'home:thread' %}is-active{% endif %}" href="{% url 'home:messages' %}" aria-label="Messages{% if unread_messages %}, {{ unread_messages }} unread{% endif %}">
-                        <svg class="icon"><use href="#i-chat"/></svg>
-                        {% if unread_messages %}<span class="count-badge">{{ unread_messages }}</span>{% endif %}
-                    </a>
-                    <a class="tool-btn {% if request.resolver_match.view_name == 'home:notifications' %}is-active{% endif %}" href="{% url 'home:notifications' %}" aria-label="Notifications{% if unread_notifications %}, {{ unread_notifications }} unread{% endif %}">
-                        <svg class="icon"><use href="#i-bell"/></svg>
-                        {% if unread_notifications %}<span class="count-badge">{{ unread_notifications }}</span>{% endif %}
-                    </a>
+                    <!-- Messages dropdown -->
+                    <div class="dropdown">
+                        <button type="button" class="tool-btn {% if request.resolver_match.view_name == 'home:messages' or request.resolver_match.view_name == 'home:thread' %}is-active{% endif %}"
+                                id="msgToggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                                aria-label="Messages{% if unread_messages %}, {{ unread_messages }} unread{% endif %}">
+                            <svg class="icon"><use href="#i-chat"/></svg>
+                            <span class="count-badge" data-badge="messages" {% if not unread_messages %}hidden{% endif %}>{{ unread_messages }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end comm-menu" aria-labelledby="msgToggle">
+                            <div class="comm-menu__head">
+                                <strong>Messages</strong>
+                                <a class="comm-link-btn" href="{% url 'home:messages' %}">See all</a>
+                            </div>
+                            <div class="comm-menu__list" data-list="messages" data-src="{% url 'home:messages_recent' %}">
+                                <div class="comm-menu__empty">Loading…</div>
+                            </div>
+                            <a class="comm-menu__foot" href="{% url 'home:messages' %}">Open Messages</a>
+                        </div>
+                    </div>
+
+                    <!-- Notifications dropdown -->
+                    <div class="dropdown">
+                        <button type="button" class="tool-btn {% if request.resolver_match.view_name == 'home:notifications' %}is-active{% endif %}"
+                                id="notifToggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                                aria-label="Notifications{% if unread_notifications %}, {{ unread_notifications }} unread{% endif %}">
+                            <svg class="icon"><use href="#i-bell"/></svg>
+                            <span class="count-badge" data-badge="notifications" {% if not unread_notifications %}hidden{% endif %}>{{ unread_notifications }}</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end comm-menu" aria-labelledby="notifToggle">
+                            <div class="comm-menu__head">
+                                <strong>Notifications</strong>
+                                <button type="button" class="comm-link-btn" data-read-all="{% url 'home:notifications_read_all' %}">Mark all as read</button>
+                            </div>
+                            <div class="comm-menu__list" data-list="notifications" data-src="{% url 'home:notifications_recent' %}">
+                                <div class="comm-menu__empty">Loading…</div>
+                            </div>
+                            <a class="comm-menu__foot" href="{% url 'home:notifications' %}">See all notifications</a>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dropdown">
@@ -235,6 +269,18 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/ui.js' %}"></script>
+    {% if user.is_authenticated %}
+        <!-- Docked chat boxes (filled by comm.js) -->
+        <div id="chatDock" class="chat-dock"
+             data-user="{{ user.pk }}"
+             data-csrf="{{ csrf_token }}"
+             data-thread-url="{% url 'home:thread' 0 %}"
+             data-poll-url="{% url 'home:thread_poll' 0 %}"
+             data-badges-url="{% url 'home:badges' %}"
+             {% if request.resolver_match.view_name == 'home:messages' or request.resolver_match.view_name == 'home:thread' %}data-disabled="1"{% endif %}
+             aria-label="Open chats"></div>
+        <script src="{% static 'js/comm.js' %}"></script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -21,6 +21,10 @@ urlpatterns = [
     path('notifications/read-all/', comm_views.notifications_read_all, name='notifications_read_all'),
     path('notifications/<int:notification_id>/open/', comm_views.notification_open, name='notification_open'),
     path('assistant/', comm_views.assistant, name='assistant'),
+    path('messages/', comm_views.inbox, name='messages'),
+    path('messages/recent/', comm_views.messages_recent, name='messages_recent'),
+    path('badges/', comm_views.badges_json, name='badges'),
+    path('notifications/recent/', comm_views.notifications_recent, name='notifications_recent'),
 
     # Records
     path('records/', records_views.records, name='records'),
