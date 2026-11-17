@@ -153,4 +153,5 @@ def appointments_view(request):
         'form': form,
         'appointments': my_appointments,
         'mother': mother,
+        'has_doctors': doctors.exists(),
     })

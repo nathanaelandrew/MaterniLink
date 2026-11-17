@@ -62,7 +62,7 @@ class MaternalHealthLogForm(forms.ModelForm):
 
 class AppointmentRequestForm(forms.Form):
     doctor = forms.ModelChoiceField(
-        queryset=DoctorProfile.objects.all(),
+        queryset=DoctorProfile.objects.filter(user__role='Doctor'),
         empty_label="Choose your Doctor",
         widget=forms.Select(attrs={'class': 'form-select'}),
         error_messages={'required': "Choose a doctor.", 'invalid_choice': "Choose a doctor from the list."},
