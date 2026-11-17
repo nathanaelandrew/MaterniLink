@@ -119,20 +119,11 @@ def appointments_view(request):
         messages.error(request, "Mother profile not found. Please log in as a Mother.")
         return redirect('home:dashboard')
 
-    # Seed a default doctor if none exists in database so dropdown works
-    if not DoctorProfile.objects.exists():
-        DoctorProfile.objects.create(
-            user=user,
-            first_name="Maria",
-            last_name="Mendoza",
-            license_number="MD-10924",
-            specialization="Obstetrics & Gynecology",
-            phone_number="0917-123-4567",
-            clinic_address="Room 304, Medical Arts Bldg."
-        )
+    # Only real doctor accounts can be booked.
+    doctors = DoctorProfile.objects.filter(user__role='Doctor')
 
     active_pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
-    default_doctor = active_pregnancy.doctor if active_pregnancy else DoctorProfile.objects.first()
+    default_doctor = active_pregnancy.doctor if active_pregnancy and active_pregnancy.doctor else doctors.first()
 
     if request.method == 'POST':
         form = AppointmentRequestForm(request.POST, mother=mother)
