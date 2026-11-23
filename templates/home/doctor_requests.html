@@ -26,7 +26,7 @@
 
 <div class="appt-feed appt-feed--tall" data-stagger="60" style="margin-top: 1.25rem">
     {% for appt in appointments %}
-        <article class="appt {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}appt--ok{% elif appt.status == 'Declined' %}appt--bad{% elif appt.status == 'Rescheduled' %}appt--info{% endif %}" data-reveal>
+        <article class="appt {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}appt--ok{% elif appt.status == 'Declined' %}appt--bad{% elif appt.status == 'Rescheduled' %}appt--info{% elif appt.status == 'Cancelled' %}appt--muted{% endif %}" data-reveal>
             <div class="date-chip">
                 <span>{{ appt.scheduled_datetime|date:"M" }}</span>
                 <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
@@ -45,6 +45,8 @@
                 <span class="pill pill--dot pill--bad">Declined</span>
             {% elif appt.status == 'Rescheduled' %}
                 <span class="pill pill--dot pill--info">Rescheduled</span>
+            {% elif appt.status == 'Cancelled' %}
+                <span class="pill pill--dot pill--neutral">Cancelled</span>
             {% else %}
                 <span class="pill pill--dot pill--pending">Pending</span>
             {% endif %}

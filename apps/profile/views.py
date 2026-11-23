@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 from datetime import date, datetime
 from django.utils import timezone
 
@@ -155,3 +157,28 @@ def appointments_view(request):
         'mother': mother,
         'has_doctors': doctors.exists(),
     })
+
+@login_required
+@require_POST
+def cancel_appointment(request, appointment_id):
+    """Let a mother withdraw her own request while it is still pending."""
+    mother = MotherProfile.objects.filter(user=request.user).first()
+    if not mother:
+        return redirect('home:dashboard')
+
+    appt = get_object_or_404(Appointment, pk=appointment_id, mother=mother)
+    if appt.status != 'Pending':
+        messages.error(request, "Only pending requests can be cancelled. Message your doctor to change a confirmed visit.")
+        return redirect('profile:appointments')
+
+    appt.status = 'Cancelled'
+    appt.save(update_fields=['status'])
+    when = timezone.localtime(appt.scheduled_datetime).strftime('%b %d at %I:%M %p')
+    messages.success(request, f"Your request for {when} was cancelled.")
+
+    if appt.doctor.user_id != request.user.pk:
+        from apps.home.notify import notify
+        notify(appt.doctor.user, "Appointment request cancelled",
+               f"{mother.first_name} {mother.last_name} cancelled her request for {when}.",
+               f"{reverse('home:doctor_requests')}?tab=history")
+    return redirect('profile:appointments')

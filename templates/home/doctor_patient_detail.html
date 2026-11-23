@@ -199,6 +199,8 @@
                             <span class="pill pill--dot pill--bad">Declined</span>
                         {% elif appt.status == 'Rescheduled' %}
                             <span class="pill pill--dot pill--info">Rescheduled</span>
+                        {% elif appt.status == 'Cancelled' %}
+                            <span class="pill pill--dot pill--neutral">Cancelled</span>
                         {% else %}
                             <span class="pill pill--dot pill--pending">Pending</span>
                         {% endif %}

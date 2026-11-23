@@ -75,14 +75,14 @@
         <div class="panel__head">
             <div>
                 <h3 class="panel__title">My appointments</h3>
-                <p class="panel__sub">Track pending confirmations and past visits.</p>
+                <p class="panel__sub">Track pending confirmations and past visits. You can cancel a request until your doctor answers it.</p>
             </div>
             <span class="pill pill--neutral">{{ appointments.count }} total</span>
         </div>
 
         <div class="appt-feed" data-stagger="70">
             {% for appt in appointments %}
-                <article class="appt {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}appt--ok{% elif appt.status == 'Declined' %}appt--bad{% elif appt.status == 'Rescheduled' %}appt--info{% endif %}" data-reveal>
+                <article class="appt {% if appt.status == 'Accepted' or appt.status == 'Confirmed' %}appt--ok{% elif appt.status == 'Declined' %}appt--bad{% elif appt.status == 'Rescheduled' %}appt--info{% elif appt.status == 'Cancelled' %}appt--muted{% endif %}" data-reveal>
                     <div class="date-chip">
                         <span>{{ appt.scheduled_datetime|date:"M" }}</span>
                         <strong>{{ appt.scheduled_datetime|date:"d" }}</strong>
@@ -99,11 +99,23 @@
                         <span class="pill pill--dot pill--bad">Declined</span>
                     {% elif appt.status == 'Rescheduled' %}
                         <span class="pill pill--dot pill--info">Rescheduled</span>
+                    {% elif appt.status == 'Cancelled' %}
+                        <span class="pill pill--dot pill--neutral">Cancelled</span>
                     {% else %}
                         <span class="pill pill--dot pill--pending">Pending</span>
                     {% endif %}
 
                     <p class="appt__reason"><b>Reason:</b> {{ appt.reason }}</p>
+
+                    {% if appt.status == 'Pending' %}
+                        <form method="post" action="{% url 'profile:cancel_appointment' appt.pk %}" class="appt__cancel"
+                              onsubmit="return confirm('Cancel your request for {{ appt.scheduled_datetime|date:"M j" }} at {{ appt.scheduled_datetime|date:"g:i A" }}? Your doctor will be told.');">
+                            {% csrf_token %}
+                            <button type="submit" class="button button--sm button--ghost">
+                                <svg class="icon"><use href="#i-x"/></svg>Cancel request
+                            </button>
+                        </form>
+                    {% endif %}
                 </article>
             {% empty %}
                 <div class="empty">

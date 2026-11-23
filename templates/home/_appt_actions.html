@@ -17,7 +17,7 @@
         </form>
     {% endif %}
 
-    {% if not compact and appt.status != 'Declined' %}
+    {% if not compact and appt.status != 'Declined' and appt.status != 'Cancelled' %}
         <details class="resched">
             <summary class="button button--sm button--soft">
                 <svg class="icon"><use href="#i-clock-arrow"/></svg>Reschedule

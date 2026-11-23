@@ -46,7 +46,10 @@ def dashboard(request):
     latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
     
     # 4. Get upcoming appointments
-    appointments = Appointment.objects.filter(mother=mother).order_by('scheduled_datetime')[:3]
+    appointments = (Appointment.objects
+                    .filter(mother=mother, scheduled_datetime__gte=timezone.now())
+                    .exclude(status__in=('Declined', 'Cancelled'))
+                    .order_by('scheduled_datetime')[:3])
 
     # 5. Today's reminders (first five; the full list lives on /home/reminders/)
     all_reminders = annotate_reminders(

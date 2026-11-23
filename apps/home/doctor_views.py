@@ -143,7 +143,7 @@ def doctor_requests(request, doctor):
         status__in=CONFIRMED, scheduled_datetime__gte=now
     ).order_by('scheduled_datetime')
     history = base.filter(
-        Q(status='Declined') | Q(scheduled_datetime__lt=now)
+        Q(status__in=('Declined', 'Cancelled')) | Q(scheduled_datetime__lt=now)
     ).exclude(status='Pending').order_by('-scheduled_datetime')
 
     tab = request.GET.get('tab', 'pending')
@@ -168,7 +168,9 @@ def appointment_respond(request, doctor, appointment_id):
     action = request.POST.get('action')
     patient = f"{appt.mother.first_name} {appt.mother.last_name}".strip()
 
-    if action == 'accept':
+    if appt.status == 'Cancelled':
+        messages.error(request, f"{patient} cancelled this request, so it can't be changed.")
+    elif action == 'accept':
         if has_clash(doctor, appt.scheduled_datetime, exclude_pk=appt.pk):
             messages.error(request, "You already have a visit within 30 minutes of that time. Reschedule instead.")
         else:

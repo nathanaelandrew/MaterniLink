@@ -2323,3 +2323,12 @@ textarea.form-control { resize: vertical; min-height: 96px; }
    ========================================================================== */
    .fhr-table { margin-top: 1rem; }
    .fhr-table td:first-child { white-space: nowrap; }
+
+/* ==========================================================================
+   22. Cancel appointment
+   ========================================================================== */
+.appt--muted::before { background: var(--line); }
+.appt--muted h4,
+.appt--muted .appt__when,
+.appt--muted .appt__reason { color: var(--ink-faint); }
+.appt__cancel { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: -.35rem; }
