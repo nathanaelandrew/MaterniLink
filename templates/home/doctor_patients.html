@@ -12,9 +12,15 @@
 
     <form method="get" class="search">
         <svg class="icon"><use href="#i-search"/></svg>
+        <input type="hidden" name="show" value="{{ show }}">
         <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Search by name" aria-label="Search patients">
     </form>
 </header>
+
+<nav class="seg" aria-label="Patient filters" data-reveal style="--d: 60ms; margin-bottom:1.25rem">
+    <a href="?show=all{% if q %}&q={{ q|urlencode }}{% endif %}" class="{% if show == 'all' %}is-active{% endif %}">All patients</a>
+    <a href="?show=unbooked{% if q %}&q={{ q|urlencode }}{% endif %}" class="{% if show == 'unbooked' %}is-active{% endif %}">No upcoming visit</a>
+</nav>
 
 <div class="patient-grid" data-stagger="60">
     {% for row in rows %}
@@ -58,7 +64,10 @@
         <div class="panel" style="grid-column: 1 / -1;">
             <div class="empty">
                 <div class="empty__icon"><svg class="icon"><use href="#i-users"/></svg></div>
-                {% if q %}
+                {% if show == 'unbooked' and not q %}
+                    <h4>Everyone has a visit booked</h4>
+                    <p>All of your patients have an upcoming confirmed appointment with you.</p>
+                {% elif q %}
                     <h4>No patients match "{{ q }}"</h4>
                     <p>Try a different name, or clear the search.</p>
                     <a href="{% url 'home:doctor_patients' %}" class="link-arrow">Clear search</a>

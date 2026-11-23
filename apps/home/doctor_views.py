@@ -7,7 +7,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -227,7 +227,22 @@ def appointment_respond(request, doctor, appointment_id):
 @doctor_required
 def doctor_patients(request, doctor):
     q = request.GET.get('q', '').strip()
+    show = request.GET.get('show', 'all')
+    if show not in ('all', 'unbooked'):
+        show = 'all'
+
     patients = patients_of(doctor)
+
+    if show == 'unbooked':
+        # SUBQUERY
+        booked_mother_ids = Appointment.objects.filter(
+            doctor=doctor,
+            status__in=CONFIRMED,
+            scheduled_datetime__gte=timezone.now(),
+        ).values('mother_id')
+        # Outer query: this doctor's patients whose id is NOT in that list
+        patients = patients.exclude(mother_id__in=Subquery(booked_mother_ids))
+
     if q:
         patients = patients.filter(
             Q(first_name__icontains=q) | Q(last_name__icontains=q)
@@ -264,6 +279,7 @@ def doctor_patients(request, doctor):
         'doctor': doctor,
         'rows': rows,
         'q': q,
+        'show': show,
     })
 
 
