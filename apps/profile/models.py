@@ -106,7 +106,7 @@ class FetalHealthLog(models.Model):
     pregnancy = models.ForeignKey(PregnancyProfile, on_delete=models.CASCADE)
     recorded_by_doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     fetal_heart_rate_bpm = models.IntegerField()
-    fundal_height_cm = models.DecimalField(max_digits=5, decimal_places=2)
+    fundal_height_cm = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     gestational_age_weeks = models.IntegerField()
     recorded_date = models.DateField()
 

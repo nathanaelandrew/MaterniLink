@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.profile.models import (
+    FetalHealthLog,
     KickCountLog,
     MaternalHealthLog,
     MotherProfile,
