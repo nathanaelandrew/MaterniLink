@@ -2317,3 +2317,9 @@ textarea.form-control { resize: vertical; min-height: 96px; }
 @media (prefers-reduced-motion: reduce) {
     .chatbox { animation: none; }
 }
+
+/* ==========================================================================
+   21. Fetal heart rate
+   ========================================================================== */
+   .fhr-table { margin-top: 1rem; }
+   .fhr-table td:first-child { white-space: nowrap; }

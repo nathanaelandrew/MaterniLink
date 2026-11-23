@@ -13,12 +13,14 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from .mother_views import FHR_HIGH, FHR_LOW
 from .notify import notify
 
 from apps.profile.models import (
     Appointment,
     ClinicalNote,
     DoctorProfile,
+    FetalHealthLog,
     KickCountLog,
     MaternalHealthLog,
     MedicalOrderRequest,
@@ -283,8 +285,12 @@ def doctor_patient_detail(request, doctor, mother_id):
         v.can_note = v.status in CONFIRMED
         v.has_note = v.pk in noted
 
-    prescriptions, orders, results, notes = [], [], [], []
+    prescriptions, orders, results, notes, fetal = [], [], [], [], []
     if pregnancy:
+        fetal = list(FetalHealthLog.objects.filter(pregnancy=pregnancy)
+                     .select_related('recorded_by_doctor').order_by('-recorded_date', '-pk')[:8])
+        for f in fetal:
+            f.out_of_range = not FHR_LOW <= f.fetal_heart_rate_bpm <= FHR_HIGH
         prescriptions = Prescription.objects.filter(pregnancy=pregnancy).select_related('doctor').order_by('-prescribed_date', '-pk')[:6]
         orders = MedicalOrderRequest.objects.filter(pregnancy=pregnancy, doctor=doctor).order_by('-requested_at')[:6]
         results = MedicalRecord.objects.filter(pregnancy=pregnancy).select_related('uploaded_by_user').order_by('-uploaded_at')[:6]
@@ -306,8 +312,10 @@ def doctor_patient_detail(request, doctor, mother_id):
         'orders': orders,
         'results': results,
         'notes': notes,
+        'fetal': fetal,
+        'fhr_low': FHR_LOW,
+        'fhr_high': FHR_HIGH,
     })
-
 
 # --------------------------------------------------------------------------
 # Calendar

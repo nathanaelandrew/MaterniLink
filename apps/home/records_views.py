@@ -22,10 +22,11 @@ from apps.profile.models import (
 )
 
 from .doctor_views import CONFIRMED, doctor_required, patients_of
-from .mother_views import mother_required
+from .mother_views import FHR_HIGH, FHR_LOW, mother_required
 from .notify import notify
 from .records_forms import (
     ClinicalNoteForm,
+    FetalCheckForm,
     OrderForm,
     PrescriptionForm,
     RecordUploadForm,
@@ -258,6 +259,36 @@ def doctor_prescribe(request, doctor, mother_id):
         'doctor': doctor, 'patient': mother, 'form': form, 'back_url': back,
     })
 
+@doctor_required
+def doctor_fetal_check(request, doctor, mother_id):
+    """Record the baby's heart rate (and optionally fundal height)."""
+    mother, pregnancy = _patient_and_pregnancy(request, doctor, mother_id)
+    back = reverse('home:doctor_patient_detail', args=[mother.pk])
+    if not pregnancy:
+        messages.error(request, f"{mother.first_name} has no active pregnancy yet.")
+        return redirect(back)
+
+    form = FetalCheckForm(request.POST or None, pregnancy=pregnancy)
+    if request.method == 'POST' and form.is_valid():
+        log = form.save(commit=False)
+        log.pregnancy, log.recorded_by_doctor = pregnancy, doctor
+        # Weeks are worked out from the pregnancy, not typed in.
+        log.gestational_age_weeks = (log.recorded_date - pregnancy.lmp_date).days // 7
+        log.save()
+
+        bpm = log.fetal_heart_rate_bpm
+        messages.success(request, f"Heart rate of {bpm} bpm saved.")
+        if not FHR_LOW <= bpm <= FHR_HIGH:
+            messages.warning(request, f"{bpm} bpm is outside the usual {FHR_LOW} to {FHR_HIGH} range.")
+        notify(mother.user, "Baby's heart rate recorded",
+               f"{doctor} recorded your baby's heart rate. See it under Trends.",
+               reverse('home:trends'))
+        return redirect(back)
+
+    return render(request, 'home/doctor_fetal_check.html', {
+        'doctor': doctor, 'patient': mother, 'pregnancy': pregnancy, 'form': form, 'back_url': back,
+        'fhr_low': FHR_LOW, 'fhr_high': FHR_HIGH,
+    })
 
 @doctor_required
 def doctor_upload(request, doctor, mother_id):

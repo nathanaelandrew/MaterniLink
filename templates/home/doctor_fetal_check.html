@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Fetal check · MaterniLink{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
+
+{% block content %}
+<a href="{{ back_url }}" class="back-link" data-reveal>
+    <svg class="icon"><use href="#i-arrow-left"/></svg>Back to chart
+</a>
+
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Fetal check</span>
+        <h1 class="page-title" style="font-size:clamp(1.8rem,3.4vw,2.5rem)">For {{ patient.first_name }} {{ patient.last_name }}</h1>
+        <p class="page-lead">Record the baby's heart rate from today's visit. The patient will see it on her Trends page.</p>
+    </div>
+</header>
+
+<section class="panel" data-reveal style="--d: 80ms">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="field {% if form.recorded_date.errors %}has-error{% endif %}">
+            <label class="field__label" for="{{ form.recorded_date.id_for_label }}">{{ form.recorded_date.label }}</label>
+            {{ form.recorded_date }}
+            {% if form.recorded_date.errors %}<div class="field__error">{{ form.recorded_date.errors.0 }}</div>{% endif %}
+            <div class="field__hint">Weeks of pregnancy are worked out from her last period ({{ pregnancy.lmp_date|date:"M j, Y" }}).</div>
+        </div>
+        <div class="field-row">
+            <div class="field {% if form.fetal_heart_rate_bpm.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.fetal_heart_rate_bpm.id_for_label }}">{{ form.fetal_heart_rate_bpm.label }}</label>
+                {{ form.fetal_heart_rate_bpm }}
+                {% if form.fetal_heart_rate_bpm.errors %}<div class="field__error">{{ form.fetal_heart_rate_bpm.errors.0 }}</div>{% endif %}
+                <div class="field__hint">Usual range: {{ fhr_low }} to {{ fhr_high }} bpm.</div>
+            </div>
+            <div class="field {% if form.fundal_height_cm.errors %}has-error{% endif %}">
+                <label class="field__label" for="{{ form.fundal_height_cm.id_for_label }}">{{ form.fundal_height_cm.label }}</label>
+                {{ form.fundal_height_cm }}
+                {% if form.fundal_height_cm.errors %}<div class="field__error">{{ form.fundal_height_cm.errors.0 }}</div>{% endif %}
+                <div class="field__hint">Usually measured from about 20 weeks.</div>
+            </div>
+        </div>
+        <button type="submit" class="button button--lg button--block mt-2">Save fetal check</button>
+    </form>
+</section>
+{% endblock %}

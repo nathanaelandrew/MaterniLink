@@ -36,6 +36,7 @@ urlpatterns = [
     path('orders/<int:order_id>/cancel/', records_views.order_cancel, name='order_cancel'),
     path('patients/<int:mother_id>/prescribe/', records_views.doctor_prescribe, name='doctor_prescribe'),
     path('patients/<int:mother_id>/upload/', records_views.doctor_upload, name='doctor_upload'),
+    path('patients/<int:mother_id>/fetal/', records_views.doctor_fetal_check, name='doctor_fetal_check'),
     path('appointments/<int:appointment_id>/note/', records_views.doctor_note, name='doctor_note'),
 
     # Doctor side

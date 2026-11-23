@@ -7,7 +7,7 @@
     <div>
         <span class="eyebrow">Your pregnancy</span>
         <h1 class="page-title">Health trends</h1>
-        <p class="page-lead">Your weight, blood pressure and baby's movements over time, drawn from what you have logged.</p>
+        <p class="page-lead">Your weight, blood pressure, baby's movements and heart rate over time, from what you and your doctor have recorded.</p>
     </div>
     <a href="{% url 'profile:add_health_log' %}" class="button">
         <svg class="icon"><use href="#i-plus"/></svg>Record vitals
@@ -98,6 +98,54 @@
         {% endif %}
     </section>
 
+    <!-- Baby's heart rate (recorded by the doctor) -->
+    <section class="panel trend-grid__wide" data-reveal style="--d: 180ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Baby's heart rate</h3>
+                <p class="panel__sub">Beats per minute, recorded by your doctor at check-ups. Dashed lines mark {{ fhr_low }} and {{ fhr_high }}.</p>
+            </div>
+            {% if has_fetal %}
+                <span class="pill pill--info">Latest: {{ fhr_latest.fetal_heart_rate_bpm }} bpm</span>
+            {% endif %}
+        </div>
+        {% if has_fetal %}
+            {% include 'home/_line_chart.html' with chart=fhr_chart label="Line chart of your baby's heart rate in beats per minute over time" %}
+
+            <div class="callout callout--{{ fhr_level }}">
+                <svg class="icon"><use href="#{% if fhr_level == 'ok' %}i-check{% else %}i-info{% endif %}"/></svg>
+                <div>
+                    <strong>Latest reading: {{ fhr_label }}</strong>
+                    <p>{{ fhr_advice }}</p>
+                </div>
+            </div>
+
+            <div class="table-wrap fhr-table">
+                <table class="table-clean">
+                    <thead>
+                        <tr><th>Date</th><th>Week</th><th>Heart rate</th><th>Fundal height</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fhr_recent %}
+                            <tr>
+                                <td>{{ f.recorded_date|date:"M j, Y" }}</td>
+                                <td>{{ f.gestational_age_weeks }}</td>
+                                <td><strong>{{ f.fetal_heart_rate_bpm }} bpm</strong></td>
+                                <td>{% if f.fundal_height_cm is not None %}{{ f.fundal_height_cm|floatformat:1 }} cm{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">
+                <div class="empty__icon"><svg class="icon"><use href="#i-heart"/></svg></div>
+                <h4>No heart rate readings yet</h4>
+                <p>Your doctor records your baby's heart rate at check-ups. Each reading will show up here.</p>
+            </div>
+        {% endif %}
+    </section>
+    
     <!-- Kicks -->
     <section class="panel trend-grid__wide" data-reveal style="--d: 200ms">
         <div class="panel__head">

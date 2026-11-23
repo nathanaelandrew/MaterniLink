@@ -1,8 +1,9 @@
 import os
 
 from django import forms
+from django.utils import timezone
 
-from apps.profile.models import ClinicalNote, MedicalOrderRequest, MotherProfile, Prescription
+from apps.profile.models import ClinicalNote, FetalHealthLog, MedicalOrderRequest, MotherProfile, Prescription
 
 ALLOWED_EXTENSIONS = {'.pdf', '.jpg', '.jpeg', '.png'}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -98,3 +99,50 @@ class RecordUploadForm(forms.Form):
         if f.size == 0:
             raise forms.ValidationError("The file is empty.")
         return f
+
+class FetalCheckForm(forms.ModelForm):
+    """Baby's heart rate (and optional fundal height), recorded by the doctor."""
+    class Meta:
+        model = FetalHealthLog
+        fields = ['recorded_date', 'fetal_heart_rate_bpm', 'fundal_height_cm']
+        labels = {
+            'recorded_date': 'Date measured',
+            'fetal_heart_rate_bpm': 'Fetal heart rate (bpm)',
+            'fundal_height_cm': 'Fundal height (cm)',
+        }
+        widgets = {
+            'recorded_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fetal_heart_rate_bpm': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 145',
+                                                             'min': 60, 'max': 240, 'inputmode': 'numeric'}),
+            'fundal_height_cm': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Optional, e.g. 24.5',
+                                                         'min': 5, 'max': 50, 'step': '0.1', 'inputmode': 'decimal'}),
+        }
+
+    def __init__(self, *args, pregnancy=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pregnancy = pregnancy
+        self.fields['fundal_height_cm'].required = False
+        if not self.is_bound and not self.initial.get('recorded_date'):
+            self.initial['recorded_date'] = timezone.localdate()
+
+    def clean_recorded_date(self):
+        d = self.cleaned_data['recorded_date']
+        if d > timezone.localdate():
+            raise forms.ValidationError("The date can't be in the future.")
+        if self.pregnancy and d < self.pregnancy.lmp_date:
+            raise forms.ValidationError("The date is before this pregnancy started.")
+        if self.pregnancy and (d - self.pregnancy.lmp_date).days < 6 * 7:
+            raise forms.ValidationError("A heartbeat can't usually be measured before 6 weeks. Check the date.")
+        return d
+
+    def clean_fetal_heart_rate_bpm(self):
+        bpm = self.cleaned_data['fetal_heart_rate_bpm']
+        if not 60 <= bpm <= 240:
+            raise forms.ValidationError("Enter a heart rate between 60 and 240 bpm.")
+        return bpm
+
+    def clean_fundal_height_cm(self):
+        cm = self.cleaned_data.get('fundal_height_cm')
+        if cm is not None and not 5 <= cm <= 50:
+            raise forms.ValidationError("Enter a fundal height between 5 and 50 cm, or leave it blank.")
+        return cm
