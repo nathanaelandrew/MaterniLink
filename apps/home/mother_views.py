@@ -55,6 +55,18 @@ def bp_status(systolic, diastolic):
                 "if it keeps happening.")
     return ('ok', 'In the usual range', "Nothing unusual in your latest reading.")
 
+# Usual baseline range for a baby's heart rate.
+FHR_LOW, FHR_HIGH = 110, 160
+
+
+def fhr_status(bpm):
+    """Gentle, informational wording for one fetal heart rate reading."""
+    if bpm < FHR_LOW or bpm > FHR_HIGH:
+        return ('high', f'Outside the usual {FHR_LOW} to {FHR_HIGH} range',
+                "Your doctor took this reading and will talk it through with you. "
+                "If you have questions, send them a message.")
+    return ('ok', 'In the usual range',
+            f"Most babies' heart rates sit between {FHR_LOW} and {FHR_HIGH} beats per minute.")
 
 # --------------------------------------------------------------------------
 # Trends
@@ -65,15 +77,32 @@ def trends(request, mother):
         mother=mother, pregnancy_status='Ongoing'
     ).order_by('-created_at').first()
 
-    logs, sessions = [], []
+    logs, sessions, fetal = [], [], []
     if pregnancy:
+        fetal = list(FetalHealthLog.objects.filter(pregnancy=pregnancy)
+                     .order_by('-recorded_date', '-pk')[:12])[::-1]
         logs = list(MaternalHealthLog.objects.filter(pregnancy=pregnancy)
                     .order_by('-log_date', '-pk')[:12])[::-1]
         sessions = list(KickCountLog.objects.filter(pregnancy=pregnancy)
                         .order_by('-start_time')[:10])[::-1]
 
     ctx = {'mother': mother, 'has_logs': bool(logs), 'has_sessions': bool(sessions),
-           'kick_goal': KICK_GOAL}
+           'has_fetal': bool(fetal), 'kick_goal': KICK_GOAL,
+           'fhr_low': FHR_LOW, 'fhr_high': FHR_HIGH}
+
+    if fetal:
+        ctx['fhr_chart'] = line_chart(
+            [f.recorded_date for f in fetal],
+            [{'name': 'Heart rate', 'cls': 'clay', 'unit': 'bpm',
+              'values': [f.fetal_heart_rate_bpm for f in fetal],
+              'flags': [not FHR_LOW <= f.fetal_heart_rate_bpm <= FHR_HIGH for f in fetal]}],
+            refs=[(FHR_HIGH, str(FHR_HIGH)), (FHR_LOW, str(FHR_LOW))], min_span=60,
+            W=1000, H=300,
+        )
+        last = fetal[-1]
+        ctx['fhr_latest'] = last
+        ctx['fhr_level'], ctx['fhr_label'], ctx['fhr_advice'] = fhr_status(last.fetal_heart_rate_bpm)
+        ctx['fhr_recent'] = fetal[::-1][:5]
 
     if logs:
         dates = [l.log_date for l in logs]
