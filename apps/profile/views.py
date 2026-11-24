@@ -16,7 +16,10 @@ from .models import (
 )
 
 # 2. All necessary forms
-from .forms import MaternalHealthLogForm, AppointmentRequestForm
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from .forms import MaternalHealthLogForm, AppointmentRequestForm, StartPregnancyForm
+from .utils import calculate_edd
 
 
 @login_required
@@ -95,8 +98,8 @@ def add_health_log(request):
     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
 
     if not pregnancy:
-        messages.error(request, "You need an active pregnancy profile to log vitals.")
-        return redirect('home:dashboard')
+        messages.info(request, "Set up your pregnancy first, then you can log your vitals.")
+        return redirect(f"{reverse('profile:start_pregnancy')}?next={reverse('profile:add_health_log')}")
 
     if request.method == 'POST':
         form = MaternalHealthLogForm(request.POST)
@@ -182,3 +185,34 @@ def cancel_appointment(request, appointment_id):
                f"{mother.first_name} {mother.last_name} cancelled her request for {when}.",
                f"{reverse('home:doctor_requests')}?tab=history")
     return redirect('profile:appointments')
+
+
+@login_required
+def start_pregnancy(request):
+    """A mother sets her last period date; we create her pregnancy and due date."""
+    if request.user.role != 'Mother':
+        return redirect('home:dashboard')
+    mother = MotherProfile.objects.filter(user=request.user).first()
+    if not mother:
+        return redirect('home:dashboard')
+
+    # Only send her on to a page of this site.
+    next_url = request.POST.get('next') or request.GET.get('next') or ''
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
+                                           require_https=request.is_secure()):
+        next_url = ''
+
+    if PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').exists():
+        messages.info(request, "You're already tracking a pregnancy.")
+        return redirect(next_url or 'home:dashboard')
+
+    form = StartPregnancyForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        lmp = form.cleaned_data['lmp_date']
+        PregnancyProfile.objects.create(
+            mother=mother, lmp_date=lmp, edd_date=calculate_edd(lmp), pregnancy_status='Ongoing')
+        messages.success(request, f"All set! Your estimated due date is {calculate_edd(lmp):%B %d, %Y}.")
+        return redirect(next_url or 'home:dashboard')
+
+    return render(request, 'profile/start_pregnancy.html', {
+        'form': form, 'mother': mother, 'next': next_url})

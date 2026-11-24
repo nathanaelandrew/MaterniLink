@@ -8,4 +8,5 @@ urlpatterns = [
     path('log-vitals/', views.add_health_log, name='add_health_log'),
     path('appointments/', views.appointments_view, name='appointments'),
     path('appointments/<int:appointment_id>/cancel/', views.cancel_appointment, name='cancel_appointment'),
+    path('start/', views.start_pregnancy, name='start_pregnancy'),
     ]

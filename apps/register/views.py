@@ -41,6 +41,8 @@ def register_view(request):
                 )
 
             login(request, user)
+            if role == 'Mother':
+                return redirect('profile:start_pregnancy')
             return redirect('home:dashboard')
     else:
         form = SignUpForm()

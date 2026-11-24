@@ -45,7 +45,7 @@ class StartPregnancyFlowTests(TestCase):
         self.assertIn('/login/', response['Location'])
 
     def test_page_renders(self):
-        self.assertContains(self.client.get(self.url), 'Start Tracking')
+        self.assertContains(self.client.get(self.url), 'Start tracking')
 
     def test_valid_lmp_creates_pregnancy_with_edd(self):
         lmp = self.today - timedelta(days=70)
@@ -89,7 +89,7 @@ class DashboardTests(TestCase):
     def test_empty_state_prompts_to_start_pregnancy(self):
         response = self.client.get(reverse('home:dashboard'))
         self.assertContains(response, reverse('profile:start_pregnancy'))
-        self.assertNotContains(response, "Record Today's Vitals")
+        self.assertNotContains(response, "Record today's vitals")
 
     def test_dashboard_shows_weeks_from_lmp(self):
         lmp = timezone.localdate() - timedelta(days=100)  # 14 weeks, 2 days
@@ -98,7 +98,7 @@ class DashboardTests(TestCase):
         response = self.client.get(reverse('home:dashboard'))
         self.assertEqual(response.context['weeks'], 14)
         self.assertEqual(response.context['trimester'], 2)
-        self.assertContains(response, "Record Today's Vitals")
+        self.assertContains(response, "Record today's vitals")
         self.assertNotContains(response, 'Set up my pregnancy')
 
 

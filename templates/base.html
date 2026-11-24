@@ -18,7 +18,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/maternilink.css' %}" rel="stylesheet">
 </head>
-<body class="{% if prefs.reduce_motion %}reduce-motion{% endif %}">
+<body class="{% if prefs.reduce_motion %}reduce-motion{% endif %}{% if user.is_authenticated and user.role == 'Mother' %} is-mother{% endif %}">
 
     <!-- Icon sprite: <svg class="icon"><use href="#i-name"/></svg> -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -220,7 +220,7 @@
 
     {% if user.is_authenticated and user.role != 'Doctor' %}
         <!-- Mobile bottom navigation -->
-        <nav class="tabbar tabbar--5" aria-label="Primary mobile">
+        <nav class="tabbar tabbar--6" aria-label="Primary mobile">
             <a href="{% url 'home:dashboard' %}" class="{% if request.resolver_match.view_name == 'home:dashboard' %}is-active{% endif %}">
                 <svg class="icon"><use href="#i-home"/></svg>Home
             </a>
@@ -229,6 +229,7 @@
             </a>
             <a href="{% url 'home:kick_counter' %}" class="{% if request.resolver_match.view_name == 'home:kick_counter' %}is-active{% endif %}">
                 <svg class="icon"><use href="#i-motion"/></svg>Kicks
+            </a>
             <a href="{% url 'home:trends' %}" class="{% if request.resolver_match.view_name == 'home:trends' %}is-active{% endif %}">
                 <svg class="icon"><use href="#i-trend"/></svg>Trends
             </a>
@@ -238,6 +239,7 @@
             <a href="{% url 'home:records' %}" class="{% if request.resolver_match.view_name == 'home:records' or request.resolver_match.view_name == 'home:record_upload' %}is-active{% endif %}">
                 <svg class="icon"><use href="#i-file"/></svg>Records
             </a>
+        </nav>
         {% elif user.is_authenticated %}
             <!-- Mobile bottom navigation (doctors) -->
             <nav class="tabbar tabbar--5" aria-label="Primary mobile">

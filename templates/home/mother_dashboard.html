@@ -7,18 +7,26 @@
 <header class="page-head" data-reveal>
     <div>
         <span class="eyebrow">{% now "l, F j" %}</span>
-        <h1 class="page-title">Hello, {{ mother.first_name|default:user.username }}.</h1>
+        <h1 class="page-title">Hello, <em>{{ mother.first_name|default:user.username }}.</em></h1>
         <p class="page-lead">How are you feeling today? Here is a calm look at where you and your baby are this week.</p>
     </div>
 </header>
 
 <!-- Quick actions -->
 <section class="actions" data-stagger="80" aria-label="Quick actions">
-    <a href="{% url 'profile:add_health_log' %}" class="action action--primary" data-reveal>
-        <span class="action__icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
-        <span class="action__text"><strong>Record today's vitals</strong><span>Weight and blood pressure</span></span>
-        <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
-    </a>
+    {% if pregnancy %}
+        <a href="{% url 'profile:add_health_log' %}" class="action action--primary" data-reveal>
+            <span class="action__icon"><svg class="icon"><use href="#i-pulse"/></svg></span>
+            <span class="action__text"><strong>Record today's vitals</strong><span>Weight and blood pressure</span></span>
+            <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
+        </a>
+    {% else %}
+        <a href="{% url 'profile:start_pregnancy' %}" class="action action--primary" data-reveal>
+            <span class="action__icon"><svg class="icon"><use href="#i-heart"/></svg></span>
+            <span class="action__text"><strong>Start tracking</strong><span>Add your last period date</span></span>
+            <span class="action__go"><svg class="icon"><use href="#i-arrow-right"/></svg></span>
+        </a>
+    {% endif %}
     <a href="{% url 'home:kick_counter' %}" class="action" data-reveal>
         <span class="action__icon"><svg class="icon"><use href="#i-motion"/></svg></span>
         <span class="action__text"><strong>Kick counter</strong><span>Log baby's movements</span></span>
@@ -42,6 +50,23 @@
 <div class="dash">
     <!-- Pregnancy progress -->
     <section class="dash__hero" data-reveal style="--d: 120ms">
+        {% if not pregnancy %}
+        <div class="start-card">
+            <div class="start-card__orb" aria-hidden="true">
+                <span class="start-card__ring"></span>
+                <span class="start-card__core"><svg class="icon"><use href="#i-heart"/></svg></span>
+            </div>
+            <div class="start-card__body">
+                <span class="eyebrow">Let's begin</span>
+                <h2 class="start-card__title">Start tracking your <em>pregnancy.</em></h2>
+                <p>Tell us the first day of your last period. We'll estimate your due date and show your week-by-week progress, your baby's growth and your trends.</p>
+                <a href="{% url 'profile:start_pregnancy' %}" class="button button--lg">
+                    Set up my pregnancy
+                    <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
+                </a>
+            </div>
+        </div>
+        {% else %}
         <div class="hero">
             <div>
                 <span class="eyebrow">Pregnancy progress</span>
@@ -77,29 +102,66 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </section>
 
     <!-- Latest health metrics -->
     <section class="dash__side" data-stagger="100">
-        <div class="panel stat" data-reveal style="--d: 200ms">
-            <span class="stat__icon stat__icon--clay"><svg class="icon"><use href="#i-drop"/></svg></span>
-            <div>
-                <span class="label-caps">Blood pressure</span>
-                <p class="stat__value">
-                    {% if latest_log %}<span data-count="{{ latest_log.systolic_bp }}">{{ latest_log.systolic_bp }}</span>/<span data-count="{{ latest_log.diastolic_bp }}">{{ latest_log.diastolic_bp }}</span>{% else %}--{% endif %}
-                    <small>mmHg</small>
-                </p>
+        <div class="panel stat stat--rich" data-reveal style="--d: 200ms">
+            <div class="stat__main">
+                <span class="stat__icon stat__icon--clay"><svg class="icon"><use href="#i-drop"/></svg></span>
+                <div>
+                    <span class="label-caps">Blood pressure</span>
+                    <p class="stat__value">
+                        {% if latest_log %}<span data-count="{{ latest_log.systolic_bp }}">{{ latest_log.systolic_bp }}</span>/<span data-count="{{ latest_log.diastolic_bp }}">{{ latest_log.diastolic_bp }}</span>{% else %}--{% endif %}
+                        <small>mmHg</small>
+                    </p>
+                </div>
+                {% if vitals.bp_spark %}
+                    <svg class="spark spark--clay" viewBox="0 0 {{ vitals.bp_spark.W }} {{ vitals.bp_spark.H }}" aria-hidden="true">
+                        <path class="spark__area" d="{{ vitals.bp_spark.area }}"/>
+                        <polyline class="spark__line" points="{{ vitals.bp_spark.points }}"/>
+                        <circle class="spark__dot" cx="{{ vitals.bp_spark.end_x }}" cy="{{ vitals.bp_spark.end_y }}" r="3"/>
+                    </svg>
+                {% endif %}
+            </div>
+            <div class="stat__foot">
+                {% if latest_log %}
+                    <span class="pill pill--dot {% if vitals.bp_level == 'ok' %}pill--ok{% elif vitals.bp_level == 'urgent' %}pill--bad{% elif vitals.bp_level == 'low' %}pill--info{% else %}pill--pending{% endif %}">{{ vitals.bp_label }}</span>
+                    <span>Logged {{ vitals.logged_on|date:"M j" }}</span>
+                {% else %}
+                    <a href="{% url 'profile:add_health_log' %}" class="link-arrow">Record your first reading <svg class="icon"><use href="#i-arrow-right"/></svg></a>
+                {% endif %}
             </div>
         </div>
 
-        <div class="panel stat" data-reveal style="--d: 300ms">
-            <span class="stat__icon"><svg class="icon"><use href="#i-weight"/></svg></span>
-            <div>
-                <span class="label-caps">Current weight</span>
-                <p class="stat__value">
-                    {% if latest_log %}<span data-count="{{ latest_log.weight_kg|stringformat:'s' }}" data-decimals="2">{{ latest_log.weight_kg }}</span>{% else %}--{% endif %}
-                    <small>kg</small>
-                </p>
+        <div class="panel stat stat--rich" data-reveal style="--d: 280ms">
+            <div class="stat__main">
+                <span class="stat__icon"><svg class="icon"><use href="#i-weight"/></svg></span>
+                <div>
+                    <span class="label-caps">Current weight</span>
+                    <p class="stat__value">
+                        {% if latest_log %}<span data-count="{{ latest_log.weight_kg|floatformat:1 }}" data-decimals="1">{{ latest_log.weight_kg|floatformat:1 }}</span>{% else %}--{% endif %}
+                        <small>kg</small>
+                    </p>
+                </div>
+                {% if vitals.weight_spark %}
+                    <svg class="spark" viewBox="0 0 {{ vitals.weight_spark.W }} {{ vitals.weight_spark.H }}" aria-hidden="true">
+                        <path class="spark__area" d="{{ vitals.weight_spark.area }}"/>
+                        <polyline class="spark__line" points="{{ vitals.weight_spark.points }}"/>
+                        <circle class="spark__dot" cx="{{ vitals.weight_spark.end_x }}" cy="{{ vitals.weight_spark.end_y }}" r="3"/>
+                    </svg>
+                {% endif %}
+            </div>
+            <div class="stat__foot">
+                {% if vitals.weight_change is not None %}
+                    <span class="pill pill--neutral">{% if vitals.weight_change > 0 %}+{% endif %}{{ vitals.weight_change|floatformat:1 }} kg</span>
+                    <span>since your last reading</span>
+                {% elif latest_log %}
+                    <span>Log again to see your trend</span>
+                {% else %}
+                    <span>No readings yet</span>
+                {% endif %}
             </div>
         </div>
 
@@ -117,9 +179,12 @@
     <!-- Weekly development note -->
     <section class="dash__wide" data-reveal style="--d: 140ms">
         <div class="panel baby">
-            <div class="baby__badge" aria-hidden="true">
-                <span>Week</span>
-                <strong>{{ baby.week }}</strong>
+            <div class="baby__orb" style="--grow: {% widthratio weeks 40 100 %}" aria-hidden="true">
+                <span class="baby__orb-ring"></span>
+                <span class="baby__orb-core">
+                    <span>Week</span>
+                    <strong>{{ baby.week }}</strong>
+                </span>
             </div>
             <div class="baby__body">
                 <span class="eyebrow">Baby this week</span>
@@ -129,8 +194,31 @@
                     <svg class="icon"><use href="#i-heart"/></svg>
                     <span><b>For you:</b> {{ baby.tip }}</span>
                 </div>
+                <div class="baby__track" aria-label="Week {{ weeks }} of 40">
+                    <span class="baby__track-bar"><span style="width: {% widthratio weeks 40 100 %}%"></span></span>
+                    <span class="baby__track-label">{{ weeks }} of 40 weeks</span>
+                </div>
                 <p class="chart-note">General information. Every pregnancy is different, so sizes and timing vary.</p>
             </div>
+
+            <aside class="baby__vitals">
+                <div class="baby__vitals-head">
+                    <span class="stat__icon stat__icon--heart"><svg class="icon"><use href="#i-heart"/></svg></span>
+                    {% if fetal %}<span class="beat" aria-hidden="true"></span>{% endif %}
+                </div>
+                <span class="label-caps">Baby's heart rate</span>
+                <p class="stat__value">
+                    {% if fetal %}<span data-count="{{ fetal.fetal_heart_rate_bpm }}">{{ fetal.fetal_heart_rate_bpm }}</span>{% else %}--{% endif %}
+                    <small>bpm</small>
+                </p>
+                {% if fetal %}
+                    <span class="pill pill--dot {% if vitals.fhr_level == 'ok' %}pill--ok{% else %}pill--pending{% endif %}">{{ vitals.fhr_label }}</span>
+                    <p class="baby__vitals-meta">Recorded at week {{ fetal.gestational_age_weeks }}</p>
+                    <a href="{% url 'home:trends' %}" class="link-arrow baby__vitals-link">See trend <svg class="icon"><use href="#i-arrow-right"/></svg></a>
+                {% else %}
+                    <p class="baby__vitals-meta">Your doctor records this at check-ups.</p>
+                {% endif %}
+            </aside>
         </div>
     </section>
     {% endif %}

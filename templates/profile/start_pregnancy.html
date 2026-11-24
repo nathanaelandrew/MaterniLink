@@ -7,7 +7,7 @@
 <header class="page-head" data-reveal>
     <div>
         <span class="eyebrow">Getting started</span>
-        <h1 class="page-title">Let's begin your journey.</h1>
+        <h1 class="page-title">Let's begin your <em>journey.</em></h1>
         <p class="page-lead">Tell us when your last period started and we'll estimate your due date and start tracking your progress.</p>
     </div>
 </header>
@@ -15,6 +15,7 @@
 <section class="panel" data-reveal style="--d: 100ms">
     <form method="POST" novalidate>
         {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
         <div class="field {% if form.lmp_date.errors %}has-error{% endif %}">
             <label class="field__label" for="{{ form.lmp_date.id_for_label }}">{{ form.lmp_date.label }}</label>

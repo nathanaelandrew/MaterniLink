@@ -137,3 +137,20 @@ class AppointmentRequestForm(forms.Form):
                 f"{'' if same_day else local.strftime(' on %b %d')}."
             )
         return cleaned_data
+
+
+class StartPregnancyForm(forms.Form):
+    """First day of the last period. The due date is worked out from it."""
+    lmp_date = forms.DateField(
+        label='First day of your last period',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+
+    def clean_lmp_date(self):
+        lmp = self.cleaned_data['lmp_date']
+        today = timezone.localdate()
+        if lmp > today:
+            raise forms.ValidationError("This date can't be in the future.")
+        if (today - lmp).days > 42 * 7:
+            raise forms.ValidationError("That is more than 42 weeks ago. Check the date, or ask your doctor.")
+        return lmp

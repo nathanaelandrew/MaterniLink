@@ -1,16 +1,20 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.urls import reverse
 from datetime import date, timedelta
 from django.utils import timezone
 from .doctor_views import doctor_dashboard
 from .baby_weeks import baby_this_week
-from .mother_views import annotate_reminders
+from .mother_views import annotate_reminders, bp_status, fhr_status
+from .tracking import sparkline
+from apps.profile.utils import gestational_progress
 
 from apps.profile.models import (
     MotherProfile,
     PregnancyProfile,
     MaternalHealthLog,
+    FetalHealthLog,
     Appointment,
     KickCountLog,
     MedicalOrderRequest,
@@ -30,20 +34,36 @@ def dashboard(request):
     
     # 2. Fetch Active Pregnancy & Calculate Weeks
     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
-    weeks = 0
+    weeks, trimester = 0, None
     doctor_name = None
     
     if pregnancy:
-        if pregnancy.lmp_date:
-            delta = date.today() - pregnancy.lmp_date
-            weeks = max(0, delta.days // 7)
+        progress = gestational_progress(pregnancy.lmp_date, timezone.localdate())
+        weeks, trimester = progress['weeks'], progress['trimester']
         
         if pregnancy.doctor:
             d = pregnancy.doctor
             doctor_name = f"Dr. {d.first_name if d.last_name == 'Doctor' else d.last_name}"
             
-    # 3. Get latest vitals
-    latest_log = MaternalHealthLog.objects.filter(pregnancy=pregnancy).order_by('-log_date').first()
+    # 3. Latest vitals, with a short trend for the dashboard cards
+    recent_logs = list(MaternalHealthLog.objects.filter(pregnancy=pregnancy)
+                       .order_by('-log_date', '-pk')[:8])[::-1] if pregnancy else []
+    latest_log = recent_logs[-1] if recent_logs else None
+    vitals = {}
+    if latest_log:
+        level, label, _ = bp_status(latest_log.systolic_bp, latest_log.diastolic_bp)
+        vitals['bp_level'], vitals['bp_label'] = level, label
+        vitals['bp_spark'] = sparkline([l.systolic_bp for l in recent_logs])
+        vitals['weight_spark'] = sparkline([l.weight_kg for l in recent_logs])
+        if len(recent_logs) > 1:
+            vitals['weight_change'] = latest_log.weight_kg - recent_logs[-2].weight_kg
+        vitals['logged_on'] = latest_log.log_date
+
+    # Latest heart rate recorded by the doctor
+    fetal = (FetalHealthLog.objects.filter(pregnancy=pregnancy)
+             .order_by('-recorded_date', '-pk').first()) if pregnancy else None
+    if fetal:
+        vitals['fhr_level'], vitals['fhr_label'], _ = fhr_status(fetal.fetal_heart_rate_bpm)
     
     # 4. Get upcoming appointments
     appointments = (Appointment.objects
@@ -66,8 +86,12 @@ def dashboard(request):
         'reminders_total': len(all_reminders),
         'reminders_left': sum(1 for r in all_reminders if not r.done),
         'mother': mother,
+        'pregnancy': pregnancy,
         'weeks': weeks,
+        'trimester': trimester,
         'latest_log': latest_log,
+        'vitals': vitals,
+        'fetal': fetal,
         'doctor_name': doctor_name,
         'appointments': appointments
     })
@@ -84,12 +108,8 @@ def kick_counter(request):
 
     pregnancy = PregnancyProfile.objects.filter(mother=mother, pregnancy_status='Ongoing').first()
     if not pregnancy:
-        pregnancy = PregnancyProfile.objects.create(
-            mother=mother,
-            lmp_date=timezone.now().date() - timedelta(weeks=20),
-            edd_date=timezone.now().date() + timedelta(weeks=20),
-            pregnancy_status='Ongoing'
-        )
+        messages.info(request, "Set up your pregnancy first, then you can count kicks.")
+        return redirect(f"{reverse('profile:start_pregnancy')}?next={reverse('home:kick_counter')}")
 
     if request.method == 'POST':
         try:

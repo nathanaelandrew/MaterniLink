@@ -6,7 +6,7 @@ have to do arithmetic (and a comma-decimal locale can never break an SVG).
 import math
 
 W, H = 640, 260
-PL, PR, PT, PB = 46, 18, 18, 34          # plot-area padding
+PL, PR, PT, PB = 46, 18, 18, 34         
 
 
 def _f(v):
@@ -126,3 +126,20 @@ def bar_chart(items, goal=None, W=W, H=H):
         if goal is not None else None
     )
     return chart
+
+def sparkline(values, W=132, H=40, pad=4):
+    """A tiny trend line for dashboard cards. Needs at least two values."""
+    vals = [float(v) for v in values]
+    if len(vals) < 2:
+        return None
+    lo, hi = min(vals), max(vals)
+    span = (hi - lo) or 1.0
+    step = (W - 2 * pad) / (len(vals) - 1)
+    pts = [(pad + i * step, H - pad - (v - lo) / span * (H - 2 * pad)) for i, v in enumerate(vals)]
+    line = ' '.join(f"{_f(x)},{_f(y)}" for x, y in pts)
+    return {
+        'W': W, 'H': H,
+        'points': line,
+        'area': f"M{_f(pts[0][0])},{H} L{line.replace(' ', ' L')} L{_f(pts[-1][0])},{H} Z",
+        'end_x': _f(pts[-1][0]), 'end_y': _f(pts[-1][1]),
+    }
