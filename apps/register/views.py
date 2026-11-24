@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
+from django.utils import timezone
+from maternilink.views import PRIVACY_VERSION
 from .forms import SignUpForm
 from apps.profile.models import MotherProfile, DoctorProfile
 import uuid
@@ -15,6 +17,8 @@ def register_view(request):
             role = form.cleaned_data.get('role')
             user.role = role
             user.status = 'Active'
+            user.privacy_accepted_at = timezone.now()
+            user.privacy_version = PRIVACY_VERSION
             user.save()
 
             if role == 'Mother':

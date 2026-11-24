@@ -23,6 +23,11 @@ class SignUpForm(UserCreationForm):
         widget=forms.RadioSelect(attrs={'class': 'role__input'})
     )
 
+    agree_privacy = forms.BooleanField(
+        required=True,
+        error_messages={'required': 'Please read and agree to the Privacy Notice to create your account.'},
+    )
+
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ('username', 'email', 'role')
@@ -31,7 +36,7 @@ class SignUpForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         # Apply form-control styling to username and password inputs
         for name, field in self.fields.items():
-            if name != 'role':
+            if name not in ('role', 'agree_privacy'):
                 field.widget.attrs.update({'class': 'form-control'})
 
         self.fields['username'].widget.attrs.update({

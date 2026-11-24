@@ -108,5 +108,22 @@
             <button type="submit" class="button button--soft">Change password</button>
         </form>
     </section>
+
+    <!-- Privacy -->
+    <section class="panel" data-reveal style="--d: 220ms">
+        <div class="panel__head">
+            <div>
+                <h3 class="panel__title">Privacy</h3>
+                <p class="panel__sub">
+                    {% if user.privacy_accepted_at %}
+                        You agreed to the Privacy Notice on {{ user.privacy_accepted_at|date:"F j, Y" }}.
+                    {% else %}
+                        How MaterniLink collects, uses and protects your information.
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% url 'privacy' %}" class="button button--sm button--ghost">Read the notice</a>
+        </div>
+    </section>
 </div>
 {% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Notice · MaterniLink{% endblock %}
+{% block page_class %}page--medium{% endblock %}
+
+{% block content %}
+<header class="page-head" data-reveal>
+    <div>
+        <span class="eyebrow">Version {{ privacy_version }}</span>
+        <h1 class="page-title">Privacy <em>notice.</em></h1>
+        <p class="page-lead">How MaterniLink collects, uses and protects your personal and health information, in line with the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+    </div>
+</header>
+
+<div class="callout callout--low legal__note" data-reveal style="--d: 60ms">
+    <svg class="icon"><use href="#i-info"/></svg>
+    <div>
+        <strong>MaterniLink is a student project.</strong>
+        <p>It is a prototype built for a university course. Please don't rely on it for real medical care. In an emergency, go to the nearest hospital.</p>
+    </div>
+</div>
+
+<article class="panel legal" data-reveal style="--d: 100ms">
+
+    <section>
+        <h2>1. Who we are</h2>
+        <p>MaterniLink is run by its student development team, who decide how the information in this app is used. You can reach us at <a href="mailto:{{ privacy_contact_email }}">{{ privacy_contact_email }}</a>.</p>
+    </section>
+
+    <section>
+        <h2>2. What we collect</h2>
+        <ul>
+            <li><strong>Account details:</strong> username, email address, password (stored only in scrambled, hashed form) and whether you are a mother or a doctor.</li>
+            <li><strong>Profile details:</strong> name, date of birth, blood type and emergency contact for mothers; name, specialization, phone number, clinic and license number for doctors.</li>
+            <li><strong>Pregnancy and health information:</strong> last period date and due date, weight, blood pressure, kick counts, your baby's heart rate and fundal height, prescriptions, lab and ultrasound requests and results, uploaded files, and your doctor's clinical notes.</li>
+            <li><strong>Appointments and messages:</strong> appointment requests and their status, and the messages you exchange with your doctor.</li>
+            <li><strong>App activity:</strong> reminders, notifications, settings, and the questions you ask the assistant.</li>
+        </ul>
+        <p>Health information is <strong>sensitive personal information</strong> under the Data Privacy Act, so we only process it with your consent, which you give when you create your account.</p>
+    </section>
+
+    <section>
+        <h2>3. Why we use it</h2>
+        <ul>
+            <li>To run your account and show you your own dashboard, trends and records.</li>
+            <li>To connect you with your doctor: appointments, messages, prescriptions, test requests and results.</li>
+            <li>To send in-app notifications and, if you turn them on, email notifications. Emails never include health details.</li>
+            <li>To answer your questions in the assistant.</li>
+        </ul>
+        <p>We don't sell your information, use it for advertising, or share it for marketing.</p>
+    </section>
+
+    <section>
+        <h2>4. Who can see it</h2>
+        <ul>
+            <li><strong>You.</strong></li>
+            <li><strong>Your doctor:</strong> only a doctor linked to you through your pregnancy or an appointment can see your chart, records and messages.</li>
+            <li><strong>The development team</strong>, only to maintain and fix the app.</li>
+            <li><strong>Supabase</strong>, the cloud database service that stores the app's data. Its servers may be outside the Philippines.</li>
+            <li><strong>Anthropic</strong>, only if the assistant's AI answers are switched on. Your question is sent to Anthropic's AI service to write an answer. Questions that mention an emergency are never sent; the assistant shows a fixed "seek care now" message instead.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>5. How we protect it</h2>
+        <ul>
+            <li>Passwords are hashed, so no one can read them, including us.</li>
+            <li>Every page checks who you are before showing health information.</li>
+            <li>Uploaded files are never public. They are only shown to you and your linked doctor.</li>
+            <li>The connection to the database is encrypted.</li>
+        </ul>
+        <p>No system is perfectly secure. If we learn of a breach that affects your information, we will tell you.</p>
+    </section>
+
+    <section>
+        <h2>6. How long we keep it</h2>
+        <p>We keep your information while your account exists, and at most until the end of the course this prototype was built for. After that, all accounts and data are deleted. You can ask us to delete your account and data sooner at any time.</p>
+    </section>
+
+    <section>
+        <h2>7. Your rights</h2>
+        <p>Under the Data Privacy Act, you have the right to:</p>
+        <ul>
+            <li><strong>Be informed</strong> about how your information is used, which is what this notice is for.</li>
+            <li><strong>Access</strong> the information we hold about you.</li>
+            <li><strong>Correct</strong> information that is wrong. You can edit most of it yourself on your Profile page.</li>
+            <li><strong>Object</strong> to processing and <strong>withdraw your consent</strong>. Because the app can't work without your information, withdrawing consent means closing your account.</li>
+            <li><strong>Have your information erased or blocked.</strong></li>
+            <li><strong>Get a copy</strong> of your information in a common electronic format.</li>
+            <li><strong>Claim damages</strong> if you are harmed by inaccurate or unlawfully used information.</li>
+            <li><strong>Complain</strong> to the National Privacy Commission (privacy.gov.ph).</li>
+        </ul>
+        <p>To use any of these rights, email <a href="mailto:{{ privacy_contact_email }}">{{ privacy_contact_email }}</a>.</p>
+    </section>
+
+    <section>
+        <h2>8. Changes to this notice</h2>
+        <p>If we change this notice, we'll update the version date at the top. Your Settings page shows when you agreed to it.</p>
+    </section>
+</article>
+{% endblock %}

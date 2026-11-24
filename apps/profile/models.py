@@ -11,6 +11,10 @@ class User(AbstractUser):
     status = models.CharField(max_length=50, default='Active')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Proof of consent to the Privacy Notice (Data Privacy Act of 2012)
+    privacy_accepted_at = models.DateTimeField(null=True, blank=True)
+    privacy_version = models.CharField(max_length=20, blank=True)
+
     # Resolve potential conflicts with Django's default permissions
     groups = models.ManyToManyField(
         'auth.Group',

@@ -4,6 +4,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from maternilink.views import PRIVACY_VERSION
+
 from .models import MotherProfile, PregnancyProfile, User
 from .utils import calculate_edd, gestational_progress
 
@@ -103,11 +105,14 @@ class DashboardTests(TestCase):
 
 
 class SignupRedirectTests(TestCase):
-    def _register(self, role):
-        return self.client.post(reverse('register:register'), {
+    def _register(self, role, agree=True):
+        data = {
             'username': f'user_{role.lower()}', 'email': f'{role.lower()}@example.com',
             'password1': 'Str0ngPass!234', 'password2': 'Str0ngPass!234', 'role': role,
-        })
+        }
+        if agree:
+            data['agree_privacy'] = 'on'
+        return self.client.post(reverse('register:register'), data)
 
     def test_new_mother_lands_on_start_pregnancy(self):
         response = self._register('Mother')
@@ -116,3 +121,20 @@ class SignupRedirectTests(TestCase):
 
     def test_new_doctor_lands_on_dashboard(self):
         self.assertRedirects(self._register('Doctor'), reverse('home:dashboard'))
+
+    def test_register_requires_privacy_consent(self):
+        response = self._register('Mother', agree=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please read and agree to the Privacy Notice')
+        self.assertFalse(User.objects.filter(username='user_mother').exists())
+
+    def test_register_records_privacy_consent(self):
+        self._register('Mother')
+        user = User.objects.get(username='user_mother')
+        self.assertIsNotNone(user.privacy_accepted_at)
+        self.assertEqual(user.privacy_version, PRIVACY_VERSION)
+
+    def test_privacy_page_is_public(self):
+        response = self.client.get(reverse('privacy'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Data Privacy Act of 2012')

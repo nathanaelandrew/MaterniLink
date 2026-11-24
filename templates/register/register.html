@@ -96,6 +96,17 @@
                     </div>
                 </div>
 
+                <div class="consent {% if form.agree_privacy.errors %}has-error{% endif %}">
+                    <label class="consent__label" for="{{ form.agree_privacy.id_for_label }}">
+                        {{ form.agree_privacy }}
+                        <span>
+                            I have read the <a href="{% url 'privacy' %}" target="_blank" rel="noopener">Privacy Notice</a>
+                            and agree that MaterniLink may collect and process my personal and health information as described there.
+                        </span>
+                    </label>
+                    {% if form.agree_privacy.errors %}<div class="field__error">{{ form.agree_privacy.errors|first }}</div>{% endif %}
+                </div>
+
                 <button type="submit" class="button button--lg button--block mt-2">
                     Create account
                     <svg class="icon icon-nudge"><use href="#i-arrow-right"/></svg>
