@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,13 +24,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
+def env_list(name, default=''):
+    """Read a comma-separated setting from .env, e.g. 'a.com,b.com'."""
+    return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ek=y+2pn*z_in0f6w-!rihu8vs*na2e^9k-o%l95zv(hbcuoqt'
+# It lives in .env, never in this file. See .env.example.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "SECRET_KEY is missing. Add it to your .env file (see .env.example and the README)."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Off unless .env says DEBUG=True.
+DEBUG = os.environ.get('DEBUG', 'False').strip().lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', '127.0.0.1,localhost')
+
+# Needed once the site runs on a real domain, e.g. https://maternilink.example.com
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
 
 
 # Application definition
@@ -70,7 +85,6 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
                 'django.contrib.messages.context_processors.messages',
                 'apps.home.context_processors.badges',
             ],
