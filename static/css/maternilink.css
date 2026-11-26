@@ -2636,3 +2636,221 @@ body.is-mother::after {
    /* Small footer line on the landing page */
    .landing-foot { position: relative; margin: 2.5rem 0 0; text-align: center; font-size: .8rem; color: var(--ink-faint); }
    .landing-foot a { margin-left: .35rem; color: var(--sage-700); font-weight: 600; }
+
+   /* ==========================================================================
+   26. Motion layer: 21st.dev-style effects (driven by static/js/ui.js)
+   Blur fade, blur-in titles, page transitions, spotlight cards, gliding
+   tabs, shimmer and ripple buttons, border beam, tilt, badge pop, shiny
+   text and a reading progress bar. All of it switches off with reduced
+   motion (system setting or the "Reduce animations" preference).
+   ========================================================================== */
+@property --ml-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+.ml-rel { position: relative; }
+
+/* 26.1 Blur fade: reveal-on-scroll now comes out of a soft blur ---------- */
+.js [data-reveal] {
+    filter: blur(6px);
+    transition: opacity .8s var(--ease), transform .8s var(--ease), filter .8s var(--ease);
+    transition-delay: var(--d, 0ms);
+}
+.js [data-reveal].is-in { filter: none; }
+
+/* 26.2 Blur-in titles: words rise out of a blur one after another -------- */
+.ml-words .ml-word {
+    display: inline-block;
+    animation: ml-word-in .9s var(--ease) both;
+    animation-delay: calc(var(--wi, 0) * 55ms + 90ms);
+}
+/* A split title animates its own words, so it skips the block reveal */
+.js [data-reveal].ml-words { opacity: 1; transform: none; filter: none; }
+
+@keyframes ml-word-in { from { opacity: 0; filter: blur(10px); transform: translateY(.32em); } }
+
+/* 26.3 Page transitions (Chrome, Edge, Safari 18.2+; others just load) --- */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+}
+
+.app-header { view-transition-name: ml-header; }
+.tabbar { view-transition-name: ml-tabbar; }
+/* The active pill slides from the old tab to the new one */
+.nav-links .nav-link-pill.is-active { view-transition-name: ml-nav-active; }
+.tabbar a.is-active { view-transition-name: ml-tab-active; }
+.seg a.is-active { view-transition-name: ml-seg-active; }
+
+::view-transition-old(root) { animation: ml-vt-out .2s var(--ease) both; }
+::view-transition-new(root) { animation: ml-vt-in .42s var(--ease) both; }
+::view-transition-group(ml-nav-active),
+::view-transition-group(ml-tab-active),
+::view-transition-group(ml-seg-active) { animation-duration: .45s; animation-timing-function: cubic-bezier(.34, 1.25, .64, 1); }
+
+@keyframes ml-vt-out { to { opacity: 0; } }
+@keyframes ml-vt-in { from { opacity: 0; transform: translateY(10px); } }
+
+html:has(body.reduce-motion)::view-transition-group(*),
+html:has(body.reduce-motion)::view-transition-old(*),
+html:has(body.reduce-motion)::view-transition-new(*) { animation: none !important; }
+
+/* 26.4 Spotlight cards: a soft glow and a brighter rim follow the cursor - */
+.ml-spot { isolation: isolate; }
+.ml-spot::after,
+.ml-spot:not(.appt)::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s var(--ease);
+}
+.ml-spot::after {
+    inset: 0;
+    background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), var(--spot, rgba(139, 168, 149, .16)), transparent 70%);
+}
+.ml-spot:not(.appt)::before {
+    inset: -1px;
+    padding: 1px;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--spot-rim, rgba(84, 117, 99, .55)), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.ml-spot.is-lit::after,
+.ml-spot.is-lit:not(.appt)::before { opacity: 1; }
+
+.action--primary { --spot: rgba(255, 255, 255, .13); --spot-rim: rgba(255, 255, 255, .45); }
+.start-card { --spot: rgba(217, 143, 115, .12); --spot-rim: rgba(199, 125, 99, .5); }
+
+/* 26.5 Gliding hover pill for the header nav and the segmented tabs ----- */
+.has-glide > a { position: relative; z-index: 1; }
+.ml-glide {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 0;
+    border-radius: 999px;
+    background: rgba(63, 92, 77, .08);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform .38s var(--ease), width .38s var(--ease), height .38s var(--ease), opacity .2s;
+}
+.ml-glide.is-on { opacity: 1; }
+.ml-glide.is-over-active { opacity: 0; }
+.nav-links.has-glide .nav-link-pill:not(.is-active):hover { background: transparent; }
+
+/* 26.6 Shimmer and ripple buttons -------------------------------------- */
+.ml-btn,
+.ml-ripple-host { overflow: hidden; isolation: isolate; }
+
+.ml-btn:not(.button--ghost):not(.button--soft):not(.is-armed)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .26) 50%, transparent 70%);
+    transform: translateX(-120%);
+}
+.ml-btn:not(.button--ghost):not(.button--soft):not(.is-armed):hover::before {
+    transform: translateX(120%);
+    transition: transform .85s var(--ease);
+}
+/* The landing page's main button catches the light every few seconds */
+.hero-landing .cta-row .ml-btn:not(.button--ghost)::before { animation: ml-sheen 4.2s var(--ease) 1.4s infinite; }
+
+@keyframes ml-sheen { 0% { transform: translateX(-120%); } 30%, 100% { transform: translateX(120%); } }
+
+.ml-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    pointer-events: none;
+    transform: scale(0);
+    animation: ml-ripple .65s var(--ease) forwards;
+}
+@keyframes ml-ripple { 0% { transform: scale(0); opacity: .22; } 100% { transform: scale(1); opacity: 0; } }
+
+/* 26.7 Border beam: an arc of light travels around the progress card ---- */
+.ml-beam,
+.hero > .ml-beam {
+    position: absolute;
+    inset: 1px;
+    z-index: 2;
+    padding: 2px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: conic-gradient(from var(--ml-angle), transparent 0deg 230deg, var(--beam-a) 300deg, var(--beam-b) 345deg, transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: ml-beam 7s linear infinite;
+}
+.hero { --beam-a: rgba(189, 208, 195, .95); --beam-b: #F4C2AB; }
+.start-card { --beam-a: var(--sage-400); --beam-b: var(--clay-400); }
+
+@keyframes ml-beam { to { --ml-angle: 360deg; } }
+
+/* 26.8 Parallax tilt on the landing page features ---------------------- */
+.features .feature.is-tilting {
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px);
+    transition: transform .15s linear, box-shadow .3s, background .3s;
+}
+
+/* 26.9 Badge pop and bell ring when a new message or notification lands - */
+.count-badge.ml-pop { animation: ml-pop .55s var(--ease-spring); }
+.tool-btn.ml-ring > .icon { transform-origin: 50% 15%; animation: ml-ring .9s ease; }
+/* The active mobile tab gives a small bounce on arrival */
+.tabbar a.is-active .icon { animation: ml-pop .55s var(--ease-spring) .12s both; }
+
+@keyframes ml-pop { 0% { transform: scale(.5); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes ml-ring {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(14deg); }
+    30% { transform: rotate(-12deg); }
+    45% { transform: rotate(8deg); }
+    60% { transform: rotate(-5deg); }
+    75% { transform: rotate(2deg); }
+}
+
+/* 26.10 Shiny text on the landing page eyebrow -------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+    body:not(.reduce-motion) .hero-landing > .eyebrow {
+        background: linear-gradient(100deg, var(--sage-600) 42%, #A9C4B2 50%, var(--sage-600) 58%) 0 0 / 250% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: ml-shine 5s linear infinite;
+    }
+}
+@keyframes ml-shine { 0% { background-position: 100% 0; } 55%, 100% { background-position: 0 0; } }
+
+/* 26.11 Reading progress bar on long pages ------------------------------ */
+.ml-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    height: 3px;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    background: linear-gradient(90deg, var(--sage-400), var(--sage-600) 60%, var(--clay-400));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+}
+.ml-progress.is-on { opacity: 1; }
+
+/* 26.12 Reduced motion -------------------------------------------------- */
+/* Endless loops stop after one pass instead of spinning at top speed */
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-iteration-count: 1 !important; }
+.reduce-motion .ml-word { animation: none; }
+.reduce-motion [data-reveal] { filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ml-words .ml-word { animation: none; }
+    .js [data-reveal] { filter: none; }
+    .ml-beam, .hero > .ml-beam { animation: none; }
+    .ml-glide { transition: none; }
+}
